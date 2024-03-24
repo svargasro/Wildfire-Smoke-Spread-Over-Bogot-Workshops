@@ -9,7 +9,7 @@ plt.style.use('seaborn-v0_8')
 
 fig, axes = plt.subplots(figsize=(6, 6))
 
-axes.plot(t, x_t, ".", color="cyan", label=r"$(x',y')_{T}$")
+axes.plot(t, x_t, ".", color="cyan", label=r"$(t,x')_{T}$")
 axes.set_xlabel("t", fontsize=12)
 axes.set_ylabel("x'", fontsize=12)
 axes.legend(loc='upper right')
