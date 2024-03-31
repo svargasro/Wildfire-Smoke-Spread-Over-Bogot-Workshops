@@ -11,7 +11,7 @@ set border linewidth 1.5
 set xtics font 'Arial,12'
 set ytics font 'Arial,12'
 
-plot 'GasKbT=5.txt' using 1:2 title 'GasKbT=5' with lines linecolor rgb '#5C3F81', \
+plot 'GasKbT=10.txt' using 1:2 title 'GasKbT=10.0' with lines linecolor rgb '#5C3F81', \
      'LiquidoKbT=0.5.txt' using 1:2 title 'LiquidoKbT=0.5' with lines linecolor rgb '#338A4C', \
      'SolidoKbT=0.05.txt' using 1:2 title 'SolidoKbT=0.05' with lines linecolor rgb '#CF6E22' 
 

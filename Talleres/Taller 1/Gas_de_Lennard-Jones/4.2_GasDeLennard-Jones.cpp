@@ -177,9 +177,8 @@ int main(){
 Como podemos observar en la simulación el potencial de Lennard Jones se puede interpretar como un resorte entre las particulas facil de elongar 
 pero difícil de comprimir. En este caso se pone una pared circular para que las particulas reboten con ella y no escapen. Vemos que el valor de
 KbT afecta la dinámica de las particulas de manera que si:
-- KbT = 0.05 (Sólido), las particulas se mueven muy poco manteniendo practicamente sus posiciones originales, por lo que el compuesto mantiene 
-  su forma original.
-- KbT = 0.5 (Líquido), las particulas se mueven de manera más libre y se desplazan por la caja cambiando de forma.
-- KbT = 5.0 (Gas), las particulas se desplazan mucho más, alejandose de sus posiciones originiales, sin embargo el potencial entre las fuerzas 
-  sigue siendo bastante fuerte para mantenerlas relativamente agrupadas aunque no conserven la forma inicial.
+  - KbT = 0.05 (Sólido), las partículas se mueven muy poco manteniendo prácticamente sus posiciones originales, por lo que el compuesto mantiene 
+       su forma original.
+  - KbT = 0.5 (Líquido), las partículas se mueven de manera más libre y se desplazan por la caja cambiando de forma.
+  - KbT = 10.0 (Gas), las partículas se desplazan mucho más, alejándose de sus posiciones originales, por lo que el compuesto no conserva la forma inicial.
 */

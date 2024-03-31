@@ -118,7 +118,7 @@ int main(){
   int i,ix,iy;
   //Parametros de la simulación
   double m0=1.0; double R0=2.0; //Masas y radios de las particulas
-  double KbT=5; //Constante de Boltzmann 
+  double KbT=10.0; //Constante de Boltzmann 
   double dx=10.0,dy=10.0; //Separación entre partículas
   double theta; double V0=sqrt(KbT/m0), omega0=3*M_PI;//omega es la velocidad angular inicial;
   double x0,y0,Vx0,Vy0;
