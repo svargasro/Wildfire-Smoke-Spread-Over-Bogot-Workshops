@@ -98,7 +98,7 @@ int main(){
   int numOrbitas = 20; //Número total de órbitas.
   double t, ttotal=numOrbitas*T;
 
-  double dt=1; //Paso de tiempo
+  double dt=0.1; //Paso de tiempo
   Cuerpo Planeta[N];
   Interaction Newton;
   int i;

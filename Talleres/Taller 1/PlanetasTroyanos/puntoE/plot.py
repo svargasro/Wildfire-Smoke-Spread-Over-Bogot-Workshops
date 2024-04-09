@@ -57,4 +57,4 @@ periodo1 = tMax2 - tMax1
 print("Periodo 1: ", periodo1)
 
 
-fig.savefig('plot.pdf')
+fig.savefig('plot.png')
