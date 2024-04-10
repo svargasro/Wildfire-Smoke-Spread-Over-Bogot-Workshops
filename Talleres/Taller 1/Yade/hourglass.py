@@ -158,15 +158,19 @@ if __name__ == "__main__":
     # print(f"segundo={segundo}")
     beta = 0.93  # Coeficiente de fricción
     wall2=None
+    
+    R_0 = 4/100
+    D_0 = 2*R_0
                          
-    r0 = 0.020*1000
+    r0 = R_0*1000
     r1 = 0.13*1000
     h1 = 0.2*1000
     r=r1-r0
 
     g= 9.8
     D_0 = 0.04
-    d = 0.011
+    r_esfera = 0.005
+    d_esfera = 2*r_esfera
     
     previousZPositions = {} 
         
@@ -175,7 +179,7 @@ if __name__ == "__main__":
     
     matId = initialize_materials()  # Inicialización de materiales
     
-    print(f"V_o={V_o}, V_or={V_or}, m_o={m_o}")
+
     setup_simulation(matId, previousZPositions,crossings,t, flujo, k, wall,wall2, V_s, beta)  # Configuración de la simulación
 
     # Ejecución de la simulación

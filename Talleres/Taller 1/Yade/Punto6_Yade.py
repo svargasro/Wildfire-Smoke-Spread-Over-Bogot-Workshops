@@ -89,7 +89,7 @@ def count():
               Wt=35*rho_B*porosidad*(g**(1/2))*(D_0-(1.4*d))**(2.5)
               Wt2=35*rho_B*(V_s/V_t)*(g**(1/2))*(D_0-(1.4*d))**(2.5)
             #   print(f"zmax={zmax}, rint={rint}, V_t={V_t}, V_s={V_s}, porosidad={porosidad}, V_s/V_t={V_s/V_t}, Wt={Wt}, Wt2={Wt2}")
-              print(f"D_0={D_0}, d={d}, zmax={zmax}, rint={rint}, V_t={V_t}, V_s={V_s}, porosidad={porosidad}")
+              print(f"zmax={zmax}, r0={r0}, rint={rint}, porosidad={porosidad}")
     if t==5:
         wall2 = yade.utils.wall(Vector3(0,0,90), 2, sense=-1, material=matId)
         O.bodies.append(wall2)
@@ -122,7 +122,7 @@ def count():
 
 #importal el reloj y agregar a la sijulacion, y asignarle las propiedades del material
 from yade import ymport
-id_HourGl=O.bodies.append(ymport.gmsh("reloj20.mesh",scale=1000,color=(0,0,1), material='vidrio'))   
+id_HourGl=O.bodies.append(ymport.gmsh("reloj"+str(r_0)+".mesh",scale=1000,color=(0,0,1), material='vidrio'))   
 #generar un paquete de esferas
 from yade import pack
 sp= pack.SpherePack()
