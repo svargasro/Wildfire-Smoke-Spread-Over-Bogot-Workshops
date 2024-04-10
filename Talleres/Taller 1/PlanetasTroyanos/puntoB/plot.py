@@ -51,4 +51,4 @@ axes[4].ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 
 
 plt.tight_layout()
-fig.savefig('plot.pdf')
+fig.savefig('plot.png')
