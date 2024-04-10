@@ -4,6 +4,7 @@ from yade.params import table
 
 import pandas as pd
 data = pd.DataFrame(columns=['t', 'z'])
+
 rho_B = 2650
 
 #definir materilaes y su propiedades
@@ -34,6 +35,7 @@ segundo=int(1/(0.6*(table.rMean*1000)* ((rho_B / (70 * 10**9))**(1/2))))    #cua
 
 wall2=None
 V_s=500*V_o
+# R_0 = 1.5/100
 # R_0 = 2/100
 # R_0 = 2.5/100
 # R_0 = 3/100
@@ -59,18 +61,20 @@ g= 9.8
 
 print(f"D_0={D_0}, d={d}")
 #para almacenar las posiciones en z, en el intervalo anterior
+
 previousZPositions = {}
+
+
 #funcion para contar cuantas esferas han cruzado y verificar el balance de fuerzas
-def count():
+def count():  
     global previousZPositions
-    global crossings,t, flujo, V_or, k, wall, m_o,wall2, V_s
-    flujo=0      
-    print(f't={t}, flujo={flujo}, masa={flujo*m_o}, crossings={crossings}')#para poder ver ciertas cosas en la consola a la hora de modificar 
-    flujo=0  
+    global crossings,t, flujo, V_or, k, wall, m_o,wall2, V_s, R_0, r0, r1, h1, r, g, D_0, d 
     t+=1
     k+=1
+    t_estable=2 #Tiempo en el que se considera que las esferas estan en equilibrio
+    print(f't={t}, flujo={flujo}, masa={flujo*m_o}, crossings={crossings}')#para poder ver ciertas cosas en la consola a la hora de modificar
     #unbalancedforc() calcula la suma de las fuerzas desequelibradas entre las particulas
-    if utils.unbalancedForce() < 0.02 and t >2:          #el t>2 es porque unbalancedforce() tiene problemas en el principio de la simulacio
+    if utils.unbalancedForce() < 0.02 and t >t_estable:          #el t>2 es porque unbalancedforce() tiene problemas en el principio de la simulacio
         
         if wall!=None:                                   #esto se hace porque cuando intenta eliminar el muro y este no existe, hay problemas
             O.bodies.erase(wall.id)
@@ -80,20 +84,13 @@ def count():
 
         #lo siguiente es para hallar la densidad de bulk y V_t, descomentar y cuadrar para medir
           
-    if wall2 != None:
-              zmax = O.bodies[wall2.id].state.pos[2]
-              rint=zmax*(r/h1)
-              V_t=((zmax*math.pi)/3)*(r0**2+rint**2+r0*rint)
-              O.bodies[wall2.id].state.vel = Vector3(0, 0, 0)
-              porosidad = yade._utils.porosity(V_t)
-              Wt=35*rho_B*porosidad*(g**(1/2))*(D_0-(1.4*d))**(2.5)
-              Wt2=35*rho_B*(V_s/V_t)*(g**(1/2))*(D_0-(1.4*d))**(2.5)
-            #   print(f"zmax={zmax}, rint={rint}, V_t={V_t}, V_s={V_s}, porosidad={porosidad}, V_s/V_t={V_s/V_t}, Wt={Wt}, Wt2={Wt2}")
-              print(f"zmax={zmax}, r0={r0}, rint={rint}, porosidad={porosidad}")
-    if t==5:
+    if  t==3:
         wall2 = yade.utils.wall(Vector3(0,0,90), 2, sense=-1, material=matId)
         O.bodies.append(wall2)
         O.bodies[wall2.id].state.vel = Vector3(0, 0, -1) 
+        densidadbulk()
+
+        
 
      
       
@@ -119,10 +116,20 @@ def count():
         #z = O.bodies[sphereId].state.pos[2]
         data.loc[len(data)] = [O.dt*O.iter, flujo*m_o]
 
+def densidadbulk():
+        zmax = O.bodies[wall2.id].state.pos[2]
+        rint=zmax*(r/h1)
+        V_t=((zmax*math.pi)/3)*(r0**2+rint**2+r0*rint)
+        O.bodies[wall2.id].state.vel = Vector3(0, 0, 0)
+        porosidad = yade._utils.porosity(V_t)
+        Wt=35*rho_B*porosidad*(g**(1/2))*(D_0-(1.4*d))**(2.5)
+        Wt2=35*rho_B*(V_s/V_t)*(g**(1/2))*(D_0-(1.4*d))**(2.5)
+    #   print(f"zmax={zmax}, rint={rint}, V_t={V_t}, V_s={V_s}, porosidad={porosidad}, V_s/V_t={V_s/V_t}, Wt={Wt}, Wt2={Wt2}")
+        print(f"zmax={zmax}, r0={r0}, rint={rint}, porosidad={porosidad}")
 
-#importal el reloj y agregar a la sijulacion, y asignarle las propiedades del material
 from yade import ymport
-id_HourGl=O.bodies.append(ymport.gmsh("reloj"+str(r_0)+".mesh",scale=1000,color=(0,0,1), material='vidrio'))   
+#crear el reloj
+id_HourGl=O.bodies.append(ymport.gmsh("reloj" + str(int(r0)) + ".mesh",scale=1000,color=(0,0,1), material='vidrio'))   
 #generar un paquete de esferas
 from yade import pack
 sp= pack.SpherePack()
