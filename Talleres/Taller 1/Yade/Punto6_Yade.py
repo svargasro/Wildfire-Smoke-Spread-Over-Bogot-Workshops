@@ -33,14 +33,7 @@ segundo=int(1/(0.6*(table.rMean*1000)* ((rho_B / (70 * 10**9))**(1/2))))    #cua
 #las siguientes variables se activan cuando se quiera medir la densidad de bulk
 
 wall2=None
-V_s=500*V_o                                       
-r0 = 0.020*1000
-r1 = 0.13*1000
-h1 = 0.2*1000
-r=r1-r0
-
-g= 9.8
-
+V_s=500*V_o
 # R_0 = 2/100
 # R_0 = 2.5/100
 # R_0 = 3/100
@@ -55,7 +48,15 @@ D_0 = 2*R_0
 # d = 0.006
 # d = 0.008
 # D_0=0.04
-d = 0.011
+d = 0.011                                       
+r0 = R_0*1000
+r1 = 0.13*1000
+h1 = 0.2*1000
+r=r1-r0
+
+g= 9.8
+
+
 print(f"D_0={D_0}, d={d}")
 #para almacenar las posiciones en z, en el intervalo anterior
 previousZPositions = {}
@@ -88,7 +89,7 @@ def count():
               Wt=35*rho_B*porosidad*(g**(1/2))*(D_0-(1.4*d))**(2.5)
               Wt2=35*rho_B*(V_s/V_t)*(g**(1/2))*(D_0-(1.4*d))**(2.5)
             #   print(f"zmax={zmax}, rint={rint}, V_t={V_t}, V_s={V_s}, porosidad={porosidad}, V_s/V_t={V_s/V_t}, Wt={Wt}, Wt2={Wt2}")
-              print(f"D_0={D_0}, d={d}, porosidad={porosidad}")
+              print(f"D_0={D_0}, d={d}, zmax={zmax}, rint={rint}, V_t={V_t}, V_s={V_s}, porosidad={porosidad}")
     if t==5:
         wall2 = yade.utils.wall(Vector3(0,0,90), 2, sense=-1, material=matId)
         O.bodies.append(wall2)
