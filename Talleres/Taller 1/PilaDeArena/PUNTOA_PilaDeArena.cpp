@@ -5,9 +5,9 @@
 using namespace std;
 
 // Constantes del problema físico
-double Lx = 180, Ly = 60;
-const int N = 250, Ns = 90;
-const int Ntot = N + Ns + 3;
+double Lx = 160, Ly = 60;
+const int N = 200, Ns = 80;
+const int Ntot = N + Ns + 3; //Número total de granos en el sistema
 const double g = 9.8, KHertz = 1.0e4, Gamma = 150, Kcundall = 500, mu = 0.4;
 
 // Constantes del algoritmo de integración
@@ -81,11 +81,11 @@ void Cuerpo::Mueva_V(double dt, double coeficiente){
   V += F * (coeficiente * dt / m);
   omega += tau * (coeficiente * dt / I);
 }
-void Cuerpo::Dibujese(void){
+void Cuerpo::Dibujese(void)
+{
   cout << " , " << r.x() << "+" << R << "*cos(t)," << r.y() << "+" << R << "*sin(t) , "
        << r.x() << "+" << R * cos(theta) / 7.0 << "*t," << r.y() << "+" << R * sin(theta) / 7.0 << "*t";
 }
-
 //------- Funciones de la clase Colisionador --------
 void Colisionador::Inicie(void)
 {
@@ -165,8 +165,8 @@ void Colisionador::CalculeFuerzaEntre(Cuerpo &Grano1, Cuerpo &Grano2,
 //---Funciones de Animacion---
 void InicieAnimacion(void)
 {
-  //  cout<<"set terminal gif animate"<<endl;
-  //  cout<<"set output 'PilaDeArena.gif'"<<endl;
+  // cout<<"set terminal gif animate"<<endl;
+  // cout<<"set output 'PilaDeArena.gif'"<<endl;
   cout << "unset key" << endl;
   cout << "set xrange[-10:" << Lx + 10 << "]" << endl;
   cout << "set yrange[-10:" << Ly + 10 << "]" << endl;
@@ -175,7 +175,8 @@ void InicieAnimacion(void)
   cout << "set trange [0:7]" << endl;
   cout << "set isosamples 12" << endl;
 }
-void InicieCuadro(void){
+void InicieCuadro(void)
+{
   cout << "plot 0,0 ";
   cout << " , " << Lx / 7 << "*t,0";            // pared de abajo
   cout << " , " << Lx / 7 << "*t," << Ly;       // pared de arriba
@@ -185,12 +186,6 @@ void InicieCuadro(void){
 void TermineCuadro(void)
 {
   cout << endl;
-}
-
-//Dibujo de las pendientes de la pila de arena
-void DibujarPendientes(Cuerpo granoTop, Cuerpo granoLeft, Cuerpo granoRight){ //Dibuja las pendientes calculadas en la función AnguloReposo
-    cout << " , " << granoLeft.Getx() <<"+"<<(granoTop.Getx()-granoLeft.Getx())/7 << "*t," << granoLeft.Gety() <<"+"<<(granoTop.Gety()-granoLeft.Gety())/7 << "*t"; //Dibuja la pendiente1
-    cout << " , " << granoTop.Getx() <<"+"<<(granoRight.Getx()-granoTop.Getx())/7 << "*t," << granoTop.Gety() <<"+"<<(granoRight.Gety()-granoTop.Gety())/7 << "*t"; //Dibuja la pendiente2
 }
 
 //La función AnguloReposo elige los dos granos que queden a los extremos en x y el grano más alto
@@ -214,10 +209,9 @@ double AnguloReposo(Cuerpo * Grano){
   theta1 = atan(pendiente1); theta2 = atan(pendiente2); //Se hallan los ángulos de reposo theta1 y theta2
   theta = (theta1 + theta2)*0.5; //Promedio de los ángulos de reposo
 
-  DibujarPendientes(Grano[granoYMax], Grano[granoXIzquierda], Grano[granoXDerecha]);
-
   return theta;
 }
+
 
 int main()
 {
@@ -236,17 +230,17 @@ int main()
   // Variables auxiliares para las paredes
   double Rpared = 100 * Lx, Mpared = 100 * m0;
   double Rs = Lx / (2 * Ns); // Variables auxiliares para correr la simulacion
-  int Ncuadros = 1000; //Número de frames
+  int Ncuadros = 100; //Número de frames
   double tdibujo, tlive, dt = 1e-3, tmax = 5 * sqrt(Ly / g), ttotal = tmax*N+25, tcuadro = ttotal / (Ncuadros);
 
   InicieAnimacion();
 
   // INICIO
   // Inicializar las paredes
-  //------------------(  x0,    y0,Vx0,Vy0,theta0,omega0,    m0,    R0)
+  //------------------(x0,     y0,         Vx0,Vy0,theta0,omega0, m0, R0)
   Grano[N + Ns].Inicie(Lx / 2, Ly + Rpared, 0, 0, 0, 0, Mpared, Rpared); // Pared arriba
-  for (int i = 0; i < Ns; i++)
-    Grano[N + i].Inicie(Rs * (2 * i + 1), 0, 0, 0, 0, 0, Mpared, Rs);        // Pared abajo que contiene 80 granos de radio Rs
+  for (int i = 0; i < Ns; i++) // Pared abajo que contiene Ns granos de radio Rs
+    Grano[N + i].Inicie(Rs * (2 * i + 1), 0, 0, 0, 0, 0, Mpared, Rs); // Pared abajo que contiene Ns granos de radio Rs
   Grano[N + Ns + 1].Inicie(Lx + Rpared, Ly / 2, 0, 0, 0, 0, Mpared, Rpared); // Pared derecha
   Grano[N + Ns + 2].Inicie(-Rpared, Ly / 2, 0, 0, 0, 0, Mpared, Rpared);     // Pared izquierda
 
@@ -265,64 +259,67 @@ int main()
     //--------------------(x0,y0,Vx0,Vy0,theta0,omega0,m0,R0)
     Grano[i].Inicie(x0, y0, Vx0, Vy0, 0, omega0, m0, R0);
   }
-  
-  cout << "set label 1 \"Nlive: " << Nlive << "\" at " << Lx-20 << "," << Ly-5 << " center" << endl;
+
+  // cout << "set label 1 \"Nlive: " << Nlive << "\" at " << Lx-20 << "," << Ly-5 << " center" << endl;
 
   // CORRO
   // Nlive sirve para activar las interacciones grano por grano, de modo que cada grano pueda interactuar en el sistema cuando caiga
   for (double t = tdibujo = tlive = 0; t < ttotal; t += dt, tdibujo += dt, tlive += dt)
   {
-
+    //tlive es el tiempo de iteración para que Nlive aumente 1
     if (tlive > tmax && Nlive < N)
     {
       Nlive += 1;
       tlive = 0;
-      // cout << Nlive << endl; //Para saber en qué grano va
     }
-    
+
     if (tdibujo > tcuadro)
     { // Activa el fotograma para ser dibujado cada tcuadro tiempo
       //Muestra en la animación Nlive = 1,2,3,...
-      cout << "set label 1 \"Nlive: " << Nlive << "\""<< endl;
-      cout << "show label 1" << endl;
-
+      // cout << "set label 1 \"Nlive: " << Nlive << "\""<< endl;
+      // cout << "show label 1" << endl;
+      
       InicieCuadro();
       for (int i = N; i < N + Ns; i++)
         Grano[i].Dibujese(); // Se dibujan los granos pequeños del piso
       for (int i = 0; i < Nlive; i++)
         Grano[i].Dibujese(); // Se dibujan los granos que caen uno a uno
       TermineCuadro();
-      
+
       tdibujo = 0;
     }
 
     int i;
     for (i = 0; i < Nlive; i++) Grano[i].Mueva_r(dt, xi);
-    Hertz.CalculeTodasLasFuerzas(Grano, dt, Nlive); for (i = 0; i < Nlive; i++) Grano[i].Mueva_V(dt, Um2lambdau2);
+    Hertz.CalculeTodasLasFuerzas(Grano, dt, Nlive); 
+    for (i = 0; i < Nlive; i++) Grano[i].Mueva_V(dt, Um2lambdau2);
     for (i = 0; i < Nlive; i++) Grano[i].Mueva_r(dt, chi);
-    Hertz.CalculeTodasLasFuerzas(Grano, dt, Nlive); for (i = 0; i < Nlive; i++) Grano[i].Mueva_V(dt, lambda);
+    Hertz.CalculeTodasLasFuerzas(Grano, dt, Nlive); 
+    for (i = 0; i < Nlive; i++) Grano[i].Mueva_V(dt, lambda);
     for (i = 0; i < Nlive; i++) Grano[i].Mueva_r(dt, Um2chiplusxi);
-    Hertz.CalculeTodasLasFuerzas(Grano, dt, Nlive); for (i = 0; i < Nlive; i++) Grano[i].Mueva_V(dt, lambda);
+    Hertz.CalculeTodasLasFuerzas(Grano, dt, Nlive); 
+    for (i = 0; i < Nlive; i++) Grano[i].Mueva_V(dt, lambda);
     for (i = 0; i < Nlive; i++) Grano[i].Mueva_r(dt, chi);
-    Hertz.CalculeTodasLasFuerzas(Grano, dt, Nlive); for (i = 0; i < Nlive; i++) Grano[i].Mueva_V(dt, Um2lambdau2);
+    Hertz.CalculeTodasLasFuerzas(Grano, dt, Nlive); 
+    for (i = 0; i < Nlive; i++) Grano[i].Mueva_V(dt, Um2lambdau2);
     for (i = 0; i < Nlive; i++) Grano[i].Mueva_r(dt, xi);
   }
   InicieCuadro();
   double anguloReposo = AnguloReposo(Grano);
   TermineCuadro();
 
-  //Muestra en la animación el ángulo de reposo promedio
-  cout << "set label 2 \"Angulo: " << anguloReposo*180/3.141592 << " deg\" at " << Lx-20 << "," << Ly - 12 << " center" << endl;
-  cout << "show label 2" << endl;
-  //Muestra en la animación Nlive 
-  cout << "set label 1 \"Nlive: " << Nlive << "\""<< endl;
-  cout << "show label 1" << endl;
+  // //Muestra en la animación el ángulo de reposo promedio
+  // cout << "set label 2 \"Angulo: " << anguloReposo*180/3.141592 << " deg\" at " << Lx-20 << "," << Ly - 12 << " center" << endl;
+  // cout << "show label 2" << endl;
+  // //Muestra en la animación Nlive 
+  // cout << "set label 1 \"Nlive: " << Nlive << "\""<< endl;
+  // cout << "show label 1" << endl;
 
   InicieCuadro();
     for (int i = N; i < N + Ns; i++)
         Grano[i].Dibujese(); // Se dibujan los granos pequeños del piso
     for (int i = 0; i < Nlive; i++)
-        Grano[i].Dibujese(); // Se dibujan los granos que cayeron uno a uno
+        Grano[i].Dibujese(); // Se dibujan los granos que caen uno a uno
 
   anguloReposo = AnguloReposo(Grano);
   TermineCuadro();
