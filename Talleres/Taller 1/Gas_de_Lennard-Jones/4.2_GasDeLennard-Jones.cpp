@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <random>
-#include "vector.h"
+#include "../vector.h"
 
 //Constantes del problema físico
 double Lx=60, Ly=60; //Tamaño de la caja
