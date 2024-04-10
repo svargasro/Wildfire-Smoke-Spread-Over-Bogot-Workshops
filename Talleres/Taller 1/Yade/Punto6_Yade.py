@@ -4,18 +4,20 @@ from yade.params import table
 
 import pandas as pd
 data = pd.DataFrame(columns=['t', 'z'])
+rho_B = 2650
 
 #definir materilaes y su propiedades
-O.materials.append(FrictMat(density=2650,young=70e9,poisson=0.18,frictionAngle=0.1, label='spheresMat'))
+O.materials.append(FrictMat(density=rho_B,young=70e9,poisson=0.18,frictionAngle=0.1, label='spheresMat'))
 O.materials.append(FrictMat(density=2230,young=64e6, poisson=.20,frictionAngle=0.1,label='vidrio'))
 #O.materials.append(FrictMat(density=0.00265,young=(70e9),poisson=0.18,frictionAngle=0.1, label='spheresMat'))
 #O.materials.append(FrictMat(density=0.002230,young=(64e6), poisson=.20,frictionAngle=0.1,label='vidrio'))
 matId = O.materials.append(FrictMat())
 
 #variables que se utilizaran, y algunas que se necesitan inicializar antes de ser llamadas
+
 V_o=(4/3)*math.pi*((1000*table.rMean)**3)         #volumen de una esfera a escala
 V_or=(4/3)*math.pi*((table.rMean)**3)             #volumen de una esfera real
-m_o=2650*V_or                                      #masa de una esfera
+m_o=rho_B*V_or                                      #masa de una esfera
 
 flujo=0                  #cantidad de esferas que pasan en un segundo de un lado al otro del reloj   
 crossings=0              #cantidad total de esferas que cruzan no es mas que la suma del flujo, se hizo para confirmar que al final de la simulacion todas las esferas pasaran
@@ -23,9 +25,9 @@ crossings=0              #cantidad total de esferas que cruzan no es mas que la 
 wall = None              #se inicializa el muro 
 k=0                      #variable que sirve para salir del programa la segunda vez que las esferas queden casi en equilibrio
 t=1                      #contador de tiempo
-segundo=int(1/(0.6*(table.rMean*1000)* ((2650 / (70 * 10**9))**(1/2))))    #cuantas iteraciones es un segundo, depende O.dt
-#segundo=int(1/O.dt)
-#print(segundo,O.dt)
+segundo=int(1/(0.6*(table.rMean*1000)* ((rho_B / (70 * 10**9))**(1/2))))    #cuantas iteraciones es un segundo, depende O.dt
+# segundo=int(1/O.dt)
+# print(f"segundo={segundo}")
 
 
 #las siguientes variables se activan cuando se quiera medir la densidad de bulk
@@ -37,13 +39,32 @@ r1 = 0.13*1000
 h1 = 0.2*1000
 r=r1-r0
 
+g= 9.8
+
+# R_0 = 2/100
+# R_0 = 2.5/100
+# R_0 = 3/100
+# R_0 = 3.5/100
+R_0 = 4/100
+D_0 = 2*R_0
+
+# r = 0.55/100
+# d = 2*r
+
+# d = 0.011
+# d = 0.006
+# d = 0.008
+# D_0=0.04
+d = 0.011
+print(f"D_0={D_0}, d={d}")
 #para almacenar las posiciones en z, en el intervalo anterior
 previousZPositions = {}
 #funcion para contar cuantas esferas han cruzado y verificar el balance de fuerzas
 def count():
     global previousZPositions
     global crossings,t, flujo, V_or, k, wall, m_o,wall2, V_s
-    print (t, flujo,flujo*m_o, crossings)               #para poder ver ciertas cosas en la consola a la hora de modificar 
+    flujo=0      
+    print(f't={t}, flujo={flujo}, masa={flujo*m_o}, crossings={crossings}')#para poder ver ciertas cosas en la consola a la hora de modificar 
     flujo=0  
     t+=1
     k+=1
@@ -57,22 +78,23 @@ def count():
             pass
 
         #lo siguiente es para hallar la densidad de bulk y V_t, descomentar y cuadrar para medir
-    '''       
+          
     if wall2 != None:
               zmax = O.bodies[wall2.id].state.pos[2]
               rint=zmax*(r/h1)
               V_t=((zmax*math.pi)/3)*(r0**2+rint**2+r0*rint)
               O.bodies[wall2.id].state.vel = Vector3(0, 0, 0)
               porosidad = yade._utils.porosity(V_t)
-              Wt=35*2650*porosidad*(9.8**(1/2))*(0.04-(1.4*0.011))**(2.5)
-              Wt2=35*2650*(V_s/V_t)*(9.8**(1/2))*(0.04-(1.4*0.011))**(2.5)
-              print(zmax,rint,V_t, V_s, porosidad,V_s/V_t,Wt,Wt2)
+              Wt=35*rho_B*porosidad*(g**(1/2))*(D_0-(1.4*d))**(2.5)
+              Wt2=35*rho_B*(V_s/V_t)*(g**(1/2))*(D_0-(1.4*d))**(2.5)
+            #   print(f"zmax={zmax}, rint={rint}, V_t={V_t}, V_s={V_s}, porosidad={porosidad}, V_s/V_t={V_s/V_t}, Wt={Wt}, Wt2={Wt2}")
+              print(f"D_0={D_0}, d={d}, porosidad={porosidad}")
     if t==5:
         wall2 = yade.utils.wall(Vector3(0,0,90), 2, sense=-1, material=matId)
         O.bodies.append(wall2)
         O.bodies[wall2.id].state.vel = Vector3(0, 0, -1) 
 
-     '''
+     
       
     #cuando se vuelve a quedar en equilibrio en el fondo del reloj
     if k > 5000 and utils.unbalancedForce() <  0.02:                  
@@ -121,15 +143,15 @@ O.bodies.append(wall)
 #motores y demas elementos de la simulaciom
 
 O.engines=[
-    ForceResetter(),                                                                         #restea todas las fuerzas
-    InsertionSortCollider([Bo1_Sphere_Aabb(),Bo1_Facet_Aabb(),Bo1_Wall_Aabb()]),             #detección de colisiones entre objetos. 
-    InteractionLoop(                                                                         #establecer las interacciones entre diferentes tipos de objetos en la simulación
-        [Ig2_Sphere_Sphere_ScGeom(), Ig2_Facet_Sphere_ScGeom(), Ig2_Wall_Sphere_ScGeom()],   #tipos de interacciones geométricas que se considerarán en la simulación
-        [Ip2_FrictMat_FrictMat_MindlinPhys(betan=0.93,betas=0.93)],                          #Aquí se especifican los materiales físicos que se utilizarán en las interacciones.
-        [Law2_ScGeom_MindlinPhys_Mindlin()],                                                 #indica que se está utilizando el modelo de interacción de Hertz-Mindlin
+    ForceResetter(),                                                                         #Reinicia las fuerzas en cada paso de tiempo
+    InsertionSortCollider([Bo1_Sphere_Aabb(),Bo1_Facet_Aabb(),Bo1_Wall_Aabb()]),             #Determina las colisiones entre los diferentes tipos de objetos
+    InteractionLoop(                                                                         #Establece las interacciones entre diferentes tipos de objetos en la simulación
+        [Ig2_Sphere_Sphere_ScGeom(), Ig2_Facet_Sphere_ScGeom(), Ig2_Wall_Sphere_ScGeom()],   #Interacciones geométricas que se considerarán en la simulación
+        [Ip2_FrictMat_FrictMat_MindlinPhys(betan=0.93,betas=0.93)],                          #Interacciones materiales y físicas que se considerarán en la simulación
+        [Law2_ScGeom_MindlinPhys_Mindlin()],                                                 #Modelo de interacción física que se considerará en la simulación
     ),
-    NewtonIntegrator(damping=0,gravity=[0,0,-9.8], exactAsphericalRot=True, label='newton'), #integración numérica de las ecuaciones de movimiento del sistema, se añade gravedad
-    PyRunner(command='count()', iterPeriod=segundo, label='count', dead=False),              #permite ejecutar la funcion count() cada segundo
+    NewtonIntegrator(damping=0,gravity=[0,0,-g], exactAsphericalRot=True, label='newton'), #Integrador de newton que se utilizará en la simulación
+    PyRunner(command='count()', iterPeriod=segundo, label='count', dead=False),              #Ejecuta la función count cada segundo
     #PyRunner(command='densidadbulk()', iterPeriod=10, label='densidad', dead=False),
 
 ]
