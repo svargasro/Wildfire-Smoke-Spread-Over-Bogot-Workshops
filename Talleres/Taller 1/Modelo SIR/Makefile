@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -O2 -std=c++17
 
-all: Modelo_SIR.gif
+all: Modelo_SIR.pdf
 
 %.x: %.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
@@ -9,10 +9,10 @@ all: Modelo_SIR.gif
 data.txt: Modelo_SIR.x
 	./$^ > $@
 
-Modelo_SIR.gif: data.txt
-	gnuplot $^
+Modelo_SIR.pdf: data.txt plot.gp
+	gnuplot plot.gp
 
 .PHONY: clean
 
 clean:
-	rm -f *.x *.out *.gp *.pdf *.txt *.gif 
+	rm -f *.x *.out *.pdf *.txt *.png *.gif
