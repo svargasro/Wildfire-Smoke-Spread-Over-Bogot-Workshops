@@ -63,7 +63,7 @@ def Graficar_RK4_Bessel(Lambda):
 
   #Dominio: [r0, rf]
   r0=0.01
-  rf=10.0
+  rf=1.0
 
   #Hallamos el número de pasos que se tiene que repetir el proceso hasta que se aplique RK4 con r=rf
   NPasos=int((rf-r0)/dr)+1
@@ -100,8 +100,8 @@ def Graficar_RK4_Bessel(Lambda):
     DR[i+1]=DR[i]+(K1_DR+2*K2_DR+2*K3_DR+K4_DR)/6
     r[i+1]=r[i]+dr
 
-  #Graficamos R(r) con una leyenda que contiene el valor de λ usado acotado a dos decimales
-  plt.plot(r,R, label=(u"λ={}".format(round(Lambda,2))))
+  #Graficamos R(r) con una leyenda que contiene el valor de λ usado acotado a tres decimales
+  plt.plot(r,R, label=(u"λ={}".format(round(Lambda,3))))
   plt.legend(fontsize="16")
 
 #Esta función grafica los modos normales R(r) que no dependen de la coordenada angular 𝜃,

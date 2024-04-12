@@ -58,8 +58,8 @@ def CeroPorBiseccion(data, A, B, Err):
 
 #Esta función grafica la función de Bessel para un determinado λ_i
 def Graficar_integral_Bessel(Lambda_i):
-  #Dominio: [0, 10.0]
-  r=np.linspace(0, 10.0, 10*FA)
+  #Dominio: [0, 1.0]
+  r=np.linspace(0, 1.0, 10*FA)
 
   #Función de Bessel evaluada en cada punto del dominio (rango)
   Bessel_plot=np.zeros(len(r))
