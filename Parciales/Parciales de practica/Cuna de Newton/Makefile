@@ -1,19 +1,30 @@
 CC = g++
-CXXFLAGS = -O2 -std=c++17
-TARGET = Pendulos
+CXXFLAGS = -O3 -std=c++17
 
-all: $(TARGET).gif
+# Encuentra todos los archivos .cpp en el directorio
+CPP_FILES := $(wildcard *.cpp)
 
-$(TARGET).x: $(TARGET).cpp
-	$(CC) $(CXXFLAGS) $^ -o $@
+# Elimina el sufijo .cpp de cada archivo para obtener el nombre base
+TARGETS := $(patsubst %.cpp,%,$(CPP_FILES))
 
-$(TARGET).txt: $(TARGET).x
-	./$^ > $@
+# Primer target predeterminado
+all: $(TARGETS:=.gif)
 
-$(TARGET).gif: $(TARGET).txt
-	gnuplot $^
+# Reglas para convertir un .cpp en un .x (ejecutable)
+%.x: %.cpp
+	$(CC) $(CXXFLAGS) $< -o $@
 
+# Reglas para ejecutar un .x y guardar su salida en un .txt
+%.txt: %.x
+	./$< > $@
+
+# Reglas para convertir un .txt en un .gif usando gnuplot
+%.gif: %.txt
+	gnuplot $<
+
+# Marca 'clean' como un target ficticio
 .PHONY: clean
 
+# Comando para limpiar todos los archivos generados
 clean:
 	rm -f *.x *.gp *.pdf *.txt *.gif
