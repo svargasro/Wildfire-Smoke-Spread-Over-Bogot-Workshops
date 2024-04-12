@@ -12,7 +12,7 @@ _build
 ##Archivos de los datos
 *.dat
 *.txt
-*.csv
+#*.csv
 #*.pdf
 *.o
 *.x

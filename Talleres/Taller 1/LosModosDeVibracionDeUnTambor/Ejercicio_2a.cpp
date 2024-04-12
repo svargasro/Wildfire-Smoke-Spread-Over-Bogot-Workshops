@@ -52,5 +52,3 @@ int main() {
   
   return 0; 
 }
-
-//La gráfica fue hecha con Gnuplot

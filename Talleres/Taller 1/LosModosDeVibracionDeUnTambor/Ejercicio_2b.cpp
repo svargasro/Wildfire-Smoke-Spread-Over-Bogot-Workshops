@@ -62,6 +62,4 @@ int main() {
   
   return 0; 
 }
-
-//La gráfica fue hecha con Gnuplot
 //Los puntos donde la gráfica se hace cero son aproximadamente: 2.3, 5.6, 8.8, 11.9, 15
