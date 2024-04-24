@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cmath>
 #include "../../vector.h"
-#include "../../Random64.h"
 using namespace std;
 
 //--------------- Constantes globales ------------

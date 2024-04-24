@@ -8,13 +8,14 @@ CPP_FILES := $(wildcard *.cpp)
 TARGETS := $(patsubst %.cpp,%,$(CPP_FILES))
 
 # Define los valores de dt para usar en simulaciones
-PARAMS := 1e-2 1e-3 1e-4 1e-5
+PARAMS := 10.0
 
-TXT_FILES :=$(patsubst %,$(TARGETS)_dt=%.txt,$(PARAMS))
+TXT_FILES :=$(patsubst %,$(TARGETS)_K=%.txt,$(PARAMS))
 TARGETS_MODS := $(patsubst %.txt,%,$(TXT_FILES))
+BENCHMARK_FILES = $(patsubst %,Benchmark_CunaNewton_K=%e+10.txt,$(PARAMS))
 
 # Primer target predeterminado
-all: $(TARGETS_MODS).gif
+all: $(TARGETS_MODS).gif pendulo.png clean1
 
 # Reglas para convertir un .cpp en un .x (ejecutable)
 $(TARGETS).x: $(TARGETS).cpp
@@ -23,21 +24,30 @@ $(TARGETS).x: $(TARGETS).cpp
 # Regla para ejecutar un .x con parallel y guardar su salida en un .txt
 # Genera archivos individuales para cada valor dt automáticamente
 $(TARGETS_MODS).txt: $(TARGETS).x
-	parallel './$< {} > $(TARGETS)_dt={}.txt' ::: $(PARAMS)
+	parallel -j 8 --line-buffer './$< {} > $(TARGETS)_K={}.txt' ::: $(PARAMS)
+
 
 # Regla para convertir todos los .txt en un .gif usando gnuplot
 # Dependencias deben ser ajustadas para cada archivo específico generado
 %.gif: $(TXT_FILES)
 	gnuplot $(TXT_FILES)
 
+#Regla para convertir un .txt en un .png usando gnuplot
+pendulo.png: graph.gp
+	gnuplot graph.gp
 
-# # Regla para convertir todos los .txt en un .gif usando gnuplot
-# %.gif: $(TARGETS)_dt=%.txt
-# 	gnuplot $^
+$(info $(BENCHMARK_FILES))
+
+# Regla para limpiar todos excepto Benchmark_Pendulos.txt, los .gif y el .png
+clean1:
+	find . -type f \( -name "*." -o -name "*.x" -o -name "*.txt" -o -name "*.gp" \) -not -name $(BENCHMARK_FILES) -exec rm -f {} +
+
 
 # Marca 'clean' como un target ficticio
 .PHONY: clean
 
 # Comando para limpiar todos los archivos generados
 clean:
-	rm -f *.x *.txt *.gif
+	rm -f *.x *.txt *.gp *.gif *.png
+#find . -type f \( -name "*.x" -o -name "*.txt" -o -name "*.gp" -o -name "*.png" -o -name "*.gif" \) -not -name "Benchmark_Pendulos.txt" -exec rm -f {} +	
+	

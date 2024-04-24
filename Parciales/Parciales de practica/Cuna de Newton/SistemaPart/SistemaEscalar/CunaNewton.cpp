@@ -1,12 +1,24 @@
+/*
+Cuna de Newton
+
+Algoritmo de PERFL para mover varios péndulos simples bajo el efecto de la gravedad y 
+la fuerza de Hertz para modelar la colisión entre ellos.
+
+Obs:
+- El paso de tiempo dt debe de ser mas pequeño a medida la constante de Hertz K sea mas grande.
+- Se debe de tener cuidado con el valor de la constante de Hertz K, ya que si es muy grande
+  los péndulos pueden colapsar.
+*/
+
+
 #include <iostream>
 #include <cmath>
-#include "../vector.h"
-#include "../Random64.h"
+#include "../../../vector.h"
 using namespace std;
 
 //--------------- Constantes globales ------------
 const double g=9.8, L=12;
-const double K=1.0e3;
+double K=1.0e9;
 
 //Número de moleculass
 const int N = 3;
@@ -60,19 +72,9 @@ void Cuerpo::Inicie(double x0, double y0, double theta0, double omega0,
   theta=theta0; omega=omega0; 
   m=m0; R=R0;
 }
-#include <fstream>
+
 void Cuerpo::Mueva_Theta(double dt,double coeficiente){
   theta+=omega*(coeficiente*dt);
-  
-  ofstream archivo1("PendulosTheta.txt", ios::app); // Open the file in append mode
-  archivo1 << theta << endl; // Write the value of tau to the file
-  archivo1.close(); // Close the file
-  // clog<<"Theta = "<<theta<<endl;
-
-  ofstream archivo2("PendulosOmega.txt", ios::app); // Open the file in append mode
-  archivo2 << omega << endl; // Write the value of tau to the file
-  archivo2.close(); // Close the file
-  // clog<<"Omega = "<<omega<<endl;
 }
 
 void Cuerpo::Mueva_Omega(double dt,double coeficiente){
@@ -80,18 +82,15 @@ void Cuerpo::Mueva_Omega(double dt,double coeficiente){
   double I = I_L + I_R; 
   double alpha = tau / I;
   omega += alpha * (coeficiente * dt);
-  ofstream archivo3("PendulosAlpha.txt", ios::app); // Open the file in append mode
-  archivo3 << alpha << endl; // Write the value of tau to the file
-  archivo3.close(); // Close the file
-  // clog<<"Alpha = "<<alpha<<endl;
-  
 }
+
 void Cuerpo::Dibujese(void){
   double x = L*sin(theta);
   double y = -L*cos(theta);
   cout<<" , "<<x + xs<<"+"<<R<<"*cos(t),"<<y + ys<<"+"<<R<<"*sin(t) , "
   <<xs<<"+"<<x/7.0<<"*t,"<<ys<<"+"<<y/7.0<<"*t";
 }
+
 //------- Funciones de la clase Colisionador --------
 void Colisionador::CalculeTodosLosTorques(Cuerpo * pendulos){
   int i,j;
@@ -140,9 +139,9 @@ void Colisionador::CalculeTorqueEntre(Cuerpo & pendulos1, Cuerpo & pendulos2){
 
 //----------- Funciones Globales -----------
 //---Funciones de Animacion---
-void InicieAnimacion(void){
+void InicieAnimacion(double dt){
   cout<<"set terminal gif animate delay 25"<<endl; 
-  cout<<"set output 'CunaNewton.gif'"<<endl;
+  cout<<"set output 'CunaNewton_dt="<<dt<<".gif'"<<endl;
   cout<<"unset key"<<endl;
   cout<<"set xrange[-20:"<<Lx + 20<<"]"<<endl;
   cout<<"set yrange[-20:"<<Ly + 20<<"]"<<endl;
@@ -167,7 +166,9 @@ void TermineCuadro(void){
     cout<<"unset label"<<endl;
 }
 
-int main(){
+int main(int argc, char *argv[]){
+  
+  double dt = atof(argv[1]);
   
   Cuerpo pendulos[N];
   Colisionador Newton;
@@ -182,11 +183,9 @@ int main(){
  
   //Variables auxiliares para correr la simulacion
   int i, Ncuadros=100; 
-  double t,tdibujo,dt=1e-2,tmax=3*T,tcuadro=tmax/Ncuadros; 
-   
-  clog<<"T = "<<T<<"s tmax = "<<tmax<<"s"<<endl;
+  double t,tdibujo,tmax=5*T,tcuadro=tmax/Ncuadros; 
 
-  InicieAnimacion();
+  InicieAnimacion(dt);
   
   //Inicie l0s pendulos
   //Inicializacion del primer pendulo

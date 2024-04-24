@@ -1,6 +1,10 @@
 #include <iostream>
+#include <chrono>
+#include <ctime>
+#include <fstream>
 #include <cmath>
-#include "../../vector.h"
+#include "../vector.h"
+
 using namespace std;
 
 //--------------- Constantes globales ------------
@@ -8,7 +12,7 @@ const double g=9.8, L=12;
 const double K=1.0e4;
 
 //Número de moleculass
-const int N = 1;
+const int N = 3;
 
 //Dimensiones de la caja
 const double Lx=0, Ly=0; 
@@ -40,6 +44,8 @@ public:
   void Dibujese(void);
   void BorreTorque(void){tau = 0 ;};// Inline
   void SumeTorque(double dtau){tau+=dtau;};// Inline
+  double GetX(void){return xs + L*sin(theta);};
+  double GetY(void){return ys - L*cos(theta);};
   friend class Colisionador;  
 };
 class Colisionador{
@@ -57,19 +63,10 @@ void Cuerpo::Inicie(double x0, double y0, double theta0, double omega0,
   theta=theta0; omega=omega0; 
   m=m0; R=R0;
 }
-#include <fstream>
+
 void Cuerpo::Mueva_theta(double dt,double coeficiente){
   theta+=omega*(coeficiente*dt);
   
-  ofstream archivo1("PendulosTheta.txt", ios::app); // Open the file in append mode
-  archivo1 << theta << endl; // Write the value of tau to the file
-  archivo1.close(); // Close the file
-  // clog<<"Theta = "<<theta<<endl;
-
-  ofstream archivo2("PendulosOmega.txt", ios::app); // Open the file in append mode
-  archivo2 << omega << endl; // Write the value of tau to the file
-  archivo2.close(); // Close the file
-  // clog<<"Omega = "<<omega<<endl;
 }
 
 void Cuerpo::Mueva_omega(double dt,double coeficiente){
@@ -77,10 +74,6 @@ void Cuerpo::Mueva_omega(double dt,double coeficiente){
   double I = I_L + I_R; 
   double alpha = tau / I;
   omega += alpha * (coeficiente * dt);
-  ofstream archivo3("PendulosAlpha.txt", ios::app); // Open the file in append mode
-  archivo3 << alpha << endl; // Write the value of tau to the file
-  archivo3.close(); // Close the file
-  // clog<<"Alpha = "<<alpha<<endl;
   
 }
 void Cuerpo::Dibujese(void){
@@ -114,7 +107,7 @@ void Colisionador::CalculeTodosLosTorques(Cuerpo * pendulos){
 //---Funciones de Animacion---
 void InicieAnimacion(void){
   cout<<"set terminal gif animate delay 10"<<endl; 
-  cout<<"set output 'Pendulos.gif'"<<endl;
+  cout<<"set output 'Pendulo.gif'"<<endl;
   cout<<"unset key"<<endl;
   cout<<"set xrange[-20:"<<Lx + 20<<"]"<<endl;
   cout<<"set yrange[-20:"<<Ly + 20<<"]"<<endl;
@@ -134,6 +127,61 @@ void TermineCuadro(void){
     cout<<"unset label"<<endl;
 }
 
+void Datos(Cuerpo & pendulo){
+  ofstream archivo("PenduloXvsY.txt", ios::app); // Open the file in append mode
+  archivo << pendulo.GetX() << " " << pendulo.GetY() << endl; // Write the value of tau to the file
+  archivo.close(); // Close the file
+}
+
+void graficar(){
+  ofstream gp("graph.gp", ios::out);
+  if (!gp) {
+    cout << "Error al abrir el archivo" << endl;
+    return;
+  }
+  gp << "n=" << N << endl;
+  gp << "set terminal png size 800,600" << endl;
+  gp << "set output 'pendulos.png'" << endl;
+  gp << "set title 'Trayectoria de los péndulos'" << endl;
+  gp << "set xlabel 'Posición X'" << endl;
+  gp << "set ylabel 'Posición Y'" << endl;
+  gp << "plot for [i=0:n-1] 'PenduloXvsY.txt' every n::i using 1:2 with linespoints pt 7 ps 1 title sprintf('Péndulo %d', i+1)" << endl;
+  gp << "set output" << endl;
+  gp.close();
+}
+
+//------------------ Funciones rendimiento ------------------
+void time(double & wsum , double & wsum2 , double & csum , double & csum2,
+          double & wtime , double & ctime )
+{
+    
+    wsum  += wtime;
+    wsum2 += wtime*wtime;
+    csum  += ctime;
+    csum2 += ctime*ctime;
+    
+    
+}
+
+void stats(double & wsum , double & wsum2 , double & csum , double & csum2,
+          double & wtime , double & ctime, double reps,
+          double & mean_wtime, double & sigma_wtime,
+          double & mean_ctime, double & sigma_ctime)
+{
+  mean_wtime = wsum/reps;
+  sigma_wtime = std::sqrt(reps*(wsum2/reps - mean_wtime*mean_wtime)/(reps-1));
+  mean_ctime = csum/reps;
+  sigma_ctime = std::sqrt(reps*(csum2/reps - mean_ctime*mean_ctime)/(reps-1));
+  
+  ofstream archivo("Benchmark_Pendulos.txt", ios::app); // Open the file in append mode
+  archivo<<"\nmean_wtime: Tiempo promedio de ejecución."<<endl;
+  archivo<<"mean_ctime: Tiempo promedio de ejecución de la CPU."<<endl;
+  archivo<<"\nmean_wtime = "<<mean_wtime<<"s  sigma_wtime = "<<sigma_wtime<<"s"<<endl;
+  archivo<<"mean_ctime = "<<mean_ctime<<"s sigma_ctime = "<<sigma_ctime<<"s"<<endl;
+  
+  archivo.close();
+}
+
 int main(){
   
   Cuerpo pendulos[N];
@@ -150,10 +198,21 @@ int main(){
  
   //Variables auxiliares para correr la simulacion
   int i, Ncuadros=100; 
-  double t,tdibujo,dt=1e-1,tmax=T,tcuadro=tmax/Ncuadros; 
+  double t,tdibujo,dt=1e-1,tmax=5*T,tcuadro=tmax/Ncuadros; 
   clog<<"T = "<<T<<"s tmax = "<<tmax<<"s"<<endl;
 
+  
+  //Variables para medir el rendimiento
+  double mean_wtime, sigma_wtime;
+  double mean_ctime, sigma_ctime;
+  double wsum = 0, wsum2 = 0, csum = 0, csum2 = 0;
+  double wtime, ctime;
+  double reps = tmax/dt;
+  auto start = std::chrono::system_clock::now(); // measures wall time
+  std::clock_t c1 = std::clock();
+
   InicieAnimacion();
+  graficar();
   
   //Inicie los pendulos
   for(i=0;i<N;i++){
@@ -169,7 +228,10 @@ int main(){
     if(tdibujo>=tcuadro){
       
       InicieCuadro(t);
-      for(i=0;i<N;i++) pendulos[i].Dibujese();
+      for(i=0;i<N;i++) {
+        pendulos[i].Dibujese();
+        Datos(pendulos[i]);  
+        }
       TermineCuadro();
       
       tdibujo=0;
@@ -195,6 +257,20 @@ int main(){
     for(i=0;i<N;i++) pendulos[i].Mueva_theta(dt,xi);
     
     clog<<"\nPorcentaje de avance: "<<(t/tmax)*100<<"%"<<endl;
+
+    auto end = std::chrono::system_clock::now(); // wall time
+    std::clock_t c2 = std::clock(); // cpu time
+
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    
+    ctime = 1.0*(c2-c1)/CLOCKS_PER_SEC;
+    wtime = elapsed_seconds.count();
+
+    time(wsum, wsum2, csum, csum2, wtime, ctime);
+
   }
+  
+  stats(wsum, wsum2, csum, csum2, wtime, ctime, reps, mean_wtime, sigma_wtime, mean_ctime, sigma_ctime);
+  
   return 0;
 }
