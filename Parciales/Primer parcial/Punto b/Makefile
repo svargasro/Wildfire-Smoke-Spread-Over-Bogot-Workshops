@@ -40,7 +40,7 @@ $(info $(BENCHMARK_FILES))
 
 # Regla para limpiar todos excepto Benchmark_Pendulos.txt, los .gif y el .png
 clean1:
-	find . -type f \( -name "*." -o -name "*.x" -o -name "*.txt" -o -name "*.gp" \) -not -name $(BENCHMARK_FILES) -exec rm -f {} +
+	find . -type f \( -name "*." -o -name "*.x" -o -name "*.txt" -o -name "*.gp" \) -not -name Benchmark_CunaNewton.txt -exec rm -f {} +
 
 
 # Marca 'clean' como un target ficticio
@@ -49,5 +49,5 @@ clean1:
 # Comando para limpiar todos los archivos generados
 clean:
 	rm -f *.x *.txt *.gp *.gif *.png
-#find . -type f \( -name "*.x" -o -name "*.txt" -o -name "*.gp" -o -name "*.png" -o -name "*.gif" \) -not -name "Benchmark_Pendulos.txt" -exec rm -f {} +	
+
 	

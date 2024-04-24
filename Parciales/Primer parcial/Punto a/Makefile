@@ -16,7 +16,7 @@ all: $(TARGETS:=.gif) pendulo.png clean1
 
 # Reglas para ejecutar un .x y guardar su salida en un .txt
 %.txt: %.x
-	parallel -j 1 --line-buffer './$<' ::: {1..10} > $@
+	parallel -j 1 --line-buffer './$<' ::: {1..2} > $@
 
 # Reglas para convertir un .txt en un .gif usando gnuplot
 %.gif: %.txt

@@ -8,8 +8,7 @@
 using namespace std;
 
 //--------------- Constantes globales ------------
-const double g=9.8, L=12;
-const double K=1.0e4;
+const double g=980.665, L=12;
 
 //Número de moleculass
 const int N = 3;
@@ -191,14 +190,14 @@ int main(){
   double m0=0.1; double R0=1.5;
   double theta01=-M_PI/12;
   double theta0i=theta01;
-  double T = M_PI*(L/g);
+  double T = 2*M_PI*sqrt(L/g);
   
   double x0=0,y0=L,omega0=0;
   double dx = 2*R0;//Separación entre pendulos 
  
   //Variables auxiliares para correr la simulacion
   int i, Ncuadros=100; 
-  double t,tdibujo,dt=1e-1,tmax=5*T,tcuadro=tmax/Ncuadros; 
+  double t,tdibujo,dt=1e-4,tmax=2*T,tcuadro=tmax/Ncuadros; 
   clog<<"T = "<<T<<"s tmax = "<<tmax<<"s"<<endl;
 
   
