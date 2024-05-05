@@ -1,4 +1,5 @@
 GCC = g++
+GPYTHON = python3
 CFLAGS = -O3 --std=c++17 -Wall
 FSANITIZE = -fsanitize=address -fsanitize=leak -fsanitize=undefined
 
@@ -12,9 +13,11 @@ $(TARGET).out: $(TARGET).cpp
 $(TARGET).txt: $(TARGET).out
 	./$(TARGET).out > $(TARGET).txt
 
-$(TARGET).png: $(TARGET).txt $(TARGET).py
-	python $(TARGET).py
+$(TARGET).png: $(TARGET).txt 
+	$(GPYTHON) $(TARGET).py
 
+
+.PHONY: clean
 
 clean: 
-	rm -f *.out *.txt *.x
+	rm -f *.out *.txt *.x 

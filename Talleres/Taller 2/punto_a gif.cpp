@@ -1,12 +1,14 @@
 #include <iostream>
 #include <cmath>
 #include <tuple>
+#include <fstream>
 #include "../Random64.h"
 
 const int Lx=256, Ly=256;
 const double p0=0.25,p=0.25;
 const int Q=4;
 const int N_automatas=1;
+std::ofstream outFileAn("animation.gp");
 
 class LatticeGas{
 private:
@@ -100,6 +102,9 @@ void LatticeGas::Adveccione(void){
       for(iy=0;iy<Ly;iy++){
         for(i=0;i<Q;i++){ //Y en cada dirección 
         if (i == 2 || i == 0)//Derecha e izquierda
+        // if (i == 1 || i == 3)//Arriba y abajo
+        // if (i == 1 || i == 0)//Arriba e izquierda
+        // if (i == 1 || i == 2)//Arriba y derecha
             n[(ix+V[i]+Lx)%Lx][iy][i]=n_new[ix][iy][i];   
         else //Arriba y abajo
             n[ix][(iy+V[i]+Lx)%Lx][i]=n_new[ix][iy][i];
@@ -117,11 +122,13 @@ void LatticeGas::Muestrese(void){
     }
 }
 //------------------- FUNCIONES GLOBALES -------
+
 tuple<double, double, double> Sigma2(LatticeGas * Difusion){
   int ix,iy,iautomata;
   bool UseNew=false;
   //Calcular cuántas bolitas hay
   double N=0.0, xprom=0.0, yprom=0.0;
+  
   for(iautomata=0;iautomata<N_automatas;iautomata++){
     for(ix=0;ix<Lx;ix++){
       for(iy=0;iy<Ly;iy++){
@@ -129,7 +136,8 @@ tuple<double, double, double> Sigma2(LatticeGas * Difusion){
         xprom+=ix*Difusion[iautomata].rho(ix,iy,UseNew);
         yprom+=iy*Difusion[iautomata].rho(ix,iy,UseNew);
        } } }
-  cout<<"N: "<<N<<endl;
+  clog<<"N: "<<N<<endl;
+  // N = 2400;
   //Calcular la posición promedio
   xprom/=N;  yprom/=N;
   //Calcular la varianza promedio
@@ -141,12 +149,48 @@ tuple<double, double, double> Sigma2(LatticeGas * Difusion){
         sigma2_x+=pow(ix-xprom,2.0)*Difusion[iautomata].rho(ix,iy,UseNew);
         sigma2_y+=pow(iy-yprom,2.0)*Difusion[iautomata].rho(ix,iy,UseNew);
       }
-  //cout<<"Sigma2: "<<Sigma2<<endl;
+  //clog<<"Sigma2: "<<Sigma2<<endl;
   sigma2_x/=(N-1);  sigma2_y/=(N-1);
   sigma2 = sigma2_x + sigma2_y;
   
   return make_tuple(sigma2_x, sigma2_y, sigma2);
 }
+
+void InicieAnimacion(int lattice_size) {
+  outFileAn << "set terminal gif animate delay 50" << std::endl;
+  outFileAn << "set output 'animation.gif'" << std::endl;
+  outFileAn << "unset key" << std::endl;
+  outFileAn << "set xrange [" << (lattice_size / 2) - lattice_size << ":"
+            << lattice_size / 2 << "]" << std::endl;
+  outFileAn << "set yrange [" << (lattice_size / 2) - lattice_size << ":"
+            << lattice_size / 2 << "]" << std::endl;
+  outFileAn << "set xtics 10" << std::endl;
+  outFileAn << "set ytics 10" << std::endl;
+  outFileAn << "set grid" << std::endl;
+  outFileAn << "set parametric" << std::endl;
+  outFileAn << "set trange [0:7]" << std::endl;
+  outFileAn << "set isosamples 12" << std::endl;
+}
+
+void InicieCuadro(int iteracion) {
+   outFileAn << "set label \"Iteración: " << iteracion
+            << "\" at graph 0.5,0.9 center" << std::endl;
+  outFileAn << "plot 0,0 notitle";
+}
+
+
+void DibujeCuadro(int x, int y, int lattice_size) {
+  outFileAn << ", " << x << "+ " << (lattice_size / 100) << "*cos(t), " << y
+            << "+ " << (lattice_size / 100) << "*sin(t) lc rgb \"blue\"";
+}
+
+
+void TermineCuadro(void) {
+  outFileAn << std::endl;
+  outFileAn << "unset label" << std::endl;
+}
+
+void TermineAnimacion(void) { outFileAn.close(); }
 
 int main(void){
   LatticeGas Difusion[N_automatas];
@@ -159,12 +203,23 @@ int main(void){
   for (int i = 0; i < N_automatas; i++) Difusion[i].Borrese();
   for (int i = 0; i < N_automatas; i++) Difusion[i].Inicie(N_par, mu_xi, mu_yi, sigma_xi, sigma_yi, ran64);
 
+  InicieAnimacion(Lx);
+
   for(int t=0;t<tmax;t++){
     double sigma_x, sigma_y, sigma2;
     std::tie(sigma_x, sigma_y,sigma2) = Sigma2(Difusion);
     cout<<t<<"\t"<<sigma_x<<"\t"<<sigma_y<<"\t"<<sigma2<<endl;
+    // cout<<t<<"\t"<<sigma2<<endl;   
+
+    InicieCuadro(t);
+    for (int i =0; i< N_par; i++) DibujeCuadro(mu_xi, mu_yi, Lx);
+    TermineCuadro();
+
+
     for (int i = 0; i < N_automatas; i++) Difusion[i].Colisione(ran64);
     for (int i = 0; i < N_automatas; i++) Difusion[i].Adveccione();
+    
   }
+  TermineAnimacion();
   return 0;
 }
