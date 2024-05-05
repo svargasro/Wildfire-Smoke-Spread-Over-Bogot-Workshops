@@ -5,6 +5,7 @@
 
 const int Lx=256, Ly=256;
 const double p0=0.25,p=0.25;
+const double pr = 1-2*p-p0;
 const int Q=4;
 const int N_automatas=1;
 
@@ -80,17 +81,18 @@ void LatticeGas::Colisione(Crandom & ran64){//Quede aquí  ---------------------
   double n_aleatorio;
   for(ix=0;ix<Lx;ix++){ //Recorriendo cada celda
     for(iy=0;iy<Ly;iy++){
-      for(i=0;i<Q;i++){       //Recorriendo cada dirección 
-      n_aleatorio = ran64.r();
-      //Se rota la celda 0 grados (quieta)
-      if(n_aleatorio<p0)n_new[ix][iy][i]=n[ix][iy][i];
-      //Se rota la celda 90 grados (derecha)
-      else if(n_aleatorio<p0+p)n_new[ix][iy][i]=n[ix][iy][(i+3)%Q];
-      //Se rota la celda 270 grados (izquierda)
-      else if(n_aleatorio<p0+2*p)n_new[ix][iy][i]=n[ix][iy][(i+1)%Q];
-      //Se rota la celda 180 grados (abajo)
-      else n_new[ix][iy][i]=n[ix][iy][(i+2)%Q];
-      }
+             //Recorriendo cada dirección 
+    n_aleatorio = ran64.r();
+    // Se rota la celda 0 grados (quieta)
+    if(n_aleatorio<p0) for(i=0;i<Q;i++) n_new[ix][iy][i]=n[ix][iy][i];
+    //Se rota la celda 90 grados (derecha)
+    else if(n_aleatorio<p0+p) for(i=0;i<Q;i++) n_new[ix][iy][i]=n[ix][iy][(i+3)%Q];
+    //Se rota la celda 270 grados (izquierda)
+    else if(n_aleatorio<p0+2*p) for(i=0;i<Q;i++) n_new[ix][iy][i]=n[ix][iy][(i+1)%Q];
+    //Se rota la celda 180 grados (abajo)
+    else for(i=0;i<Q;i++) n_new[ix][iy][i]=n[ix][iy][(i+2)%Q];
+
+      
     }
   }
 }
@@ -100,10 +102,10 @@ void LatticeGas::Adveccione(void){
     for(ix=0;ix<Lx;ix++){//Para cada celda 
       for(iy=0;iy<Ly;iy++){
         for(i=0;i<Q;i++){ //Y en cada dirección 
-        if (i == 2 || i == 0)//Derecha e izquierda
-            n[(ix+V[i]+Lx)%Lx][iy][i]=n_new[ix][iy][i];   
-        else //Arriba y abajo
-            n[ix][(iy+V[i]+Lx)%Lx][i]=n_new[ix][iy][i];
+          if (i == 2 || i == 0)//Derecha e izquierda
+              n[(ix+V[i]+Lx)%Lx][iy][i]=n_new[ix][iy][i];   
+          else //Arriba y abajo
+              n[ix][(iy+V[i]+Ly)%Ly][i]=n_new[ix][iy][i];
         }
       } 
     }
@@ -124,9 +126,12 @@ tuple<double, double, double> Sigma2(LatticeGas * Difusion){
         N+=Difusion[iautomata].rho(ix,iy,UseNew);
         xprom+=ix*Difusion[iautomata].rho(ix,iy,UseNew);
         yprom+=iy*Difusion[iautomata].rho(ix,iy,UseNew);
-       } } }
-  clog<<"N: "<<N<<endl;
+       }
+     } 
+     if (N==0){break;}
+  }
   // N = 2400;
+  clog<<"N: "<<N<<endl;
   //Calcular la posición promedio
   xprom/=N;  yprom/=N;
   //Calcular la varianza promedio
@@ -155,7 +160,7 @@ int main(void){
 
   for (int i = 0; i < N_automatas; i++) Difusion[i].Borrese();
   for (int i = 0; i < N_automatas; i++) Difusion[i].Inicie(N_par, mu_xi, mu_yi, sigma_xi, sigma_yi, ran64);
-
+  
   for(int t=0;t<tmax;t++){
     double sigma_x, sigma_y, sigma2;
     std::tie(sigma_x, sigma_y,sigma2) = Sigma2(Difusion);
