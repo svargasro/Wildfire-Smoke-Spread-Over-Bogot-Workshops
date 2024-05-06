@@ -6,7 +6,7 @@
 
 const int Lx=256, Ly=256;
 const double p0=0.25,p=0.25;
-const double pr = 1-2*p-p0;
+//const double pr = 1-2*p-p0; Probabilidad restante
 const int Q=4;
 const int N_automatas=1;
 
@@ -88,7 +88,7 @@ void LatticeGas::Colisione(Crandom & ran64){
       //Se rota la celda 270 grados (izquierda)
       else if(n_aleatorio<p0+2*p) dir=1;
       //Se rota la celda 180 grados (abajo)
-      else dir=2;
+      else dir=2; //Probabilidad restante
       for(i=0;i<Q;i++)n_new[ix][iy][i]=n[ix][iy][(i+dir)%Q];
       }
     }
