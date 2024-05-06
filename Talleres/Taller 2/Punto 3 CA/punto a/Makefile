@@ -8,7 +8,7 @@ TARGET = $(patsubst %.cpp,%,$(wildcard *.cpp))
 all: $(TARGET).png
 
 $(TARGET).out: $(TARGET).cpp
-	$(GCC) $(CFLAGS) $(FSANITIZE) $(TARGET).cpp -o $(TARGET).out
+	$(GCC) $(CFLAGS) $(TARGET).cpp -o $(TARGET).out
 
 $(TARGET).txt: $(TARGET).out
 	./$(TARGET).out > $(TARGET).txt
