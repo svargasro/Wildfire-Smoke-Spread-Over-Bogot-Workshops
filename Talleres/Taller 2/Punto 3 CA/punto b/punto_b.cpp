@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cmath>
 #include <tuple>
-#include "../../Random64.h"
 
 const int Lx=256, Ly=256;
 const double p0=0.25,p=0.25;
@@ -16,9 +15,9 @@ private:
 public:
     LatticeGas(void);
     void Borrese(void);
-    void Inicie(int N, double mu_x, double mu_y, double sigma_x, double sigma_y, Crandom&ran64);
+    void Inicie(int N, double mu_x, double mu_y, double sigma_x, double sigma_y);
     double rho(int ix, int iy, bool UseNew);
-    void Colisione(Crandom& ran64);
+    void Colisione(void);
     void Adveccione(void);
     void Muestrese(void);
 };
@@ -49,7 +48,7 @@ void LatticeGas::Borrese(void){
     }
 }
 
-void LatticeGas::Inicie(int N, double mu_x, double mu_y, double sigma_x, double sigma_y,Crandom&ran64){
+void LatticeGas::Inicie(int N, double mu_x, double mu_y, double sigma_x, double sigma_y){
     
     double gauss_x, gauss_y;
     for(int ix=0;ix<Lx;ix++){
@@ -72,7 +71,7 @@ return sum;
 }
 
 
-void LatticeGas::Colisione(Crandom & ran64){//Quede aquí  ----------------------------------------------
+void LatticeGas::Colisione(void){//Quede aquí  ----------------------------------------------
   int ix,iy,i;
   for(ix=0;ix<Lx;ix++){ //Recorriendo cada celda
     for(iy=0;iy<Ly;iy++){
@@ -100,7 +99,7 @@ void LatticeGas::Adveccione(void){
 
 
 //------------------- FUNCIONES GLOBALES -------
-tuple<double, double, double> Sigma2(LatticeGas * Difusion){
+std::tuple<double, double, double> Sigma2(LatticeGas * Difusion, bool last_i){
   int ix,iy,iautomata;
   bool UseNew=false;
   // bool UseNew = true;
@@ -114,10 +113,9 @@ tuple<double, double, double> Sigma2(LatticeGas * Difusion){
         xprom+=ix*Difusion[iautomata].rho(ix,iy,UseNew);
         yprom+=iy*Difusion[iautomata].rho(ix,iy,UseNew);
        } } }
-  clog<<"N: "<<N<<endl;
-  // N = 2400;
   //Calcular la posición promedio
   xprom/=N;  yprom/=N;
+
   //Calcular la varianza promedio
   double sigma2_x=0.0, sigma2_y=0.0;
   double sigma2;
@@ -130,28 +128,32 @@ tuple<double, double, double> Sigma2(LatticeGas * Difusion){
   //clog<<"Sigma2: "<<Sigma2<<endl;
   sigma2_x/=(N-1);  sigma2_y/=(N-1);
   sigma2 = sigma2_x + sigma2_y;
-  
-  return make_tuple(sigma2_x, sigma2_y, sigma2);
+   //Exportar datos distribucion final
+  if(last_i) std::clog<<xprom<<"\t"<<yprom<<"\t"<<sqrt(sigma2_x)<<"\t"<<sqrt(sigma2_y)<<std::endl;
+  return std::make_tuple(sigma2_x, sigma2_y, sigma2);
 }
 
 int main(void){
   LatticeGas Difusion[N_automatas];
-  Crandom ran64(1);
   int N_par=2400; //N particulas
-  double mu_xi=Lx/2, sigma_xi=16; //Centro y desviación estándar iniciales
-  double mu_yi=Ly/2, sigma_yi=16;
+  double mu0_xi=Lx/2, sigma0_xi=16; //Centro y desviación estándar iniciales
+  double mu0_yi=Ly/2, sigma0_yi=16;
   int tmax=350;
 
   for (int i = 0; i < N_automatas; i++) Difusion[i].Borrese();
-  for (int i = 0; i < N_automatas; i++) Difusion[i].Inicie(N_par, mu_xi, mu_yi, sigma_xi, sigma_yi, ran64);
+  for (int i = 0; i < N_automatas; i++) Difusion[i].Inicie(N_par, mu0_xi, mu0_yi, sigma0_xi, sigma0_yi);
+
+  //Exportar datos distribucion incial
+  std::clog<<mu0_xi<<"\t"<<mu0_yi<<"\t"<<sqrt(sigma0_xi)<<"\t"<<sqrt(sigma0_yi)<<std::endl;
 
   for(int t=0;t<tmax;t++){
     double sigma_x, sigma_y, sigma2;
-    std::tie(sigma_x, sigma_y,sigma2) = Sigma2(Difusion);
-    cout<<t<<"\t"<<sigma_x<<"\t"<<sigma_y<<"\t"<<sigma2<<endl;
-    // cout<<t<<"\t"<<sigma2<<endl;   
-    for (int i = 0; i < N_automatas; i++) Difusion[i].Colisione(ran64);
+    std::tie(sigma_x, sigma_y,sigma2) = Sigma2(Difusion,false);
+    std::cout<<t<<"\t"<<sigma_x<<"\t"<<sigma_y<<"\t"<<sigma2<<std::endl;
+    for (int i = 0; i < N_automatas; i++) Difusion[i].Colisione();
     for (int i = 0; i < N_automatas; i++) Difusion[i].Adveccione();
+    if(t == tmax-1) Sigma2(Difusion,true);
   }
+
   return 0;
 }
