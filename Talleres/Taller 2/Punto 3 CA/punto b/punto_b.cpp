@@ -56,7 +56,7 @@ void LatticeGas::Inicie(int N, double mu_x, double mu_y, double sigma_x, double 
       for(int iy=0;iy<Ly;iy++){
           gauss_y=exp(-0.5*pow((iy-mu_y)/sigma_y,2))/(sigma_y*sqrt(2*M_PI));
           for(int i=0;i<Q;i++){
-            f[ix][iy][i]=f_new[ix][iy][i]=(N/Q)*gauss_x*gauss_y;// La mitad de las partículas se iran a la derecha y la otra mitad a la izquierda
+            f[ix][iy][i]=f_new[ix][iy][i]=(N/Q)*gauss_x*gauss_y;//Un cuarto de las particulas se asigna a cada dirección 
         }
       }
     }
@@ -65,13 +65,12 @@ void LatticeGas::Inicie(int N, double mu_x, double mu_y, double sigma_x, double 
 double LatticeGas::rho(int ix, int iy, bool UseNew){
 double sum=0.0;
 
-  if(UseNew) for(int i=0;i<Q;i++) sum += f_new[ix][iy][i]; //Revisar scope
+  if(UseNew) for(int i=0;i<Q;i++) sum += f_new[ix][iy][i]; 
   else  for(int i=0;i<Q;i++) sum += f[ix][iy][i];
 return sum;
 }
 
-
-void LatticeGas::Colisione(void){//Quede aquí  ----------------------------------------------
+void LatticeGas::Colisione(void){
   int ix,iy,i;
   for(ix=0;ix<Lx;ix++){ //Recorriendo cada celda
     for(iy=0;iy<Ly;iy++){
@@ -96,7 +95,6 @@ void LatticeGas::Adveccione(void){
       } 
     }
 }
-
 
 //------------------- FUNCIONES GLOBALES -------
 std::tuple<double, double, double> Sigma2(LatticeGas * Difusion, bool last_i){
