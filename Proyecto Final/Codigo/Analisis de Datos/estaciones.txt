@@ -1,0 +1,20 @@
+Estación,VelViento,DirViento,PM10,Pm2.5
+Guaymaral,True,True,True,True
+Suba,True,True,True,True
+Colina,True,True,True,True
+Bolivia,False,False,False,True
+Usaquén,True,True,True,True
+Las Ferias,True,True,True,True
+Fontibón,True,True,True,True
+Estación Movil Fontibón,False,False,True,True
+Centro de Alto Rendimiento,True,True,True,True
+Móvil Séptima,True,True,True,True
+Ministerio de Ambiente,True,True,True,True
+Puente Aranda,True,True,True,True
+Kennedy,True,True,True,True
+Jazmín,True,True,True,True
+Carvajal-Sevillana,True,True,True,True
+Ciudad Bolivar,True,True,True,True
+Tunal,True,True,True,True
+San Cristobal,True,True,True,True
+Usme,False,False,True,True
