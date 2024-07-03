@@ -17,8 +17,5 @@ _build
 *.o
 *.x
 ##Carpeta de las tareas compañeros
-Tareas Compañeros/
-##Multimedia
-*.gif
-*.mp3
+*.xlsx
 
