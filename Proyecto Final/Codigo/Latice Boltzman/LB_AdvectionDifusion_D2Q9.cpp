@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cmath>
-#include <omp.h>
 #include <fstream>
 #include <cassert>  // Para las verificaciones
 
