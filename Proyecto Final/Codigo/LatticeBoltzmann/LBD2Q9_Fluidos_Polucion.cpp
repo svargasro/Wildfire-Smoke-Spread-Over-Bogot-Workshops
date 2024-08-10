@@ -4,8 +4,8 @@
 using namespace std;
 
 //------------------- CONSTANTES GLOBALES -------------
-const int Lx=256;
-const int Ly=256;
+const int Lx=100;
+const int Ly=100;
 
 const int Q=9;
 
@@ -35,9 +35,9 @@ public:
   //----Funciones de equilibrio----
   double feq(double rho0,double Ux0,double Uy0,int i);
   //----Evolucion temporal----
-  void Start(double rho0,double Ux0,double Uy0,double mu_x,double mu_y, double sigma_x, double sigma_y);
+  void Start(double A, double sigma0, double D, double ux, double uy, double x0, double y0);
   void Collision(void);
-  void ImposeFields(int t);
+  void ImposeFields(int t, double A, double sigma0, double D, double ux, double uy, double x0, double y0);
   void Advection(void);
   void Print(const char * NameFile);
 };
@@ -85,18 +85,15 @@ double LatticeBoltzmann::feq(double rho0,double Ux0,double Uy0,int i){
   double UdotVi=Ux0*Vx[i]+Uy0*Vy[i], U2=Ux0*Ux0+Uy0*Uy0;
   return rho0 * w[i] * (1 + UdotVi / Cs2 + (UdotVi * UdotVi) / (2 * Cs2 * Cs2) - U2 / (2 * Cs2));
 }
-void LatticeBoltzmann::Start(double rho0, double Ux0, double Uy0,double mu_x, double mu_y, double sigma_x, double sigma_y) {
+void LatticeBoltzmann::Start(double A, double sigma0, double D, double ux, double uy, double x0, double y0) {
     int ix, iy, i, n0;
-
 
     for (ix = 0; ix < Lx; ix++) {
         for (iy = 0; iy < Ly; iy++) {
-            double gauss_x = exp(-0.5 * pow((ix - mu_x) / sigma_x, 2)) / (sigma_x * sqrt(2 * M_PI));
-            double gauss_y = exp(-0.5 * pow((iy - mu_y) / sigma_y, 2)) / (sigma_y * sqrt(2 * M_PI));
-            double rho = rho0 * gauss_x * gauss_y;
+            double rho = A * exp(-(pow(ix - x0, 2) + pow(iy - y0, 2)) / (2 * sigma0 * sigma0));
             for (i = 0; i < Q; i++) {
                 n0 = n(ix, iy, i);
-                f[n0] = feq(rho, Ux0, Uy0, i);
+                f[n0] = feq(rho, ux, uy, i);
             }
         }
     }
@@ -114,9 +111,23 @@ void LatticeBoltzmann::Collision(void){
     }
 }
 
-void LatticeBoltzmann::ImposeFields(int t){
-}
+void LatticeBoltzmann::ImposeFields(int t, double A, double sigma0, double D, double ux, double uy, double x0, double y0){
+    int ix, iy, i, n0;
+    double x0_t = x0 + ux * t;
+    double y0_t = y0 + uy * t;
+    double sigma_t2 = sigma0 * sigma0 + 2 * D * t;
 
+    for (ix = 0; ix < Lx; ix++) {
+        for (iy = 0; iy < Ly; iy++) {
+            double rho = A / sqrt(1 + 2 * D * t / sigma0) *
+                         exp(-(pow(ix - x0_t, 2) + pow(iy - y0_t, 2)) / (2 * sigma_t2));
+            for (i = 0; i < Q; i++) {
+                n0 = n(ix, iy, i);
+                fnew[n0] = feq(rho, ux, uy, i);
+            }
+        }
+    }
+}
 void LatticeBoltzmann::Advection(void){
   int ix,iy,i,ixnext,iynext,n0,n0next;
   for(ix=0;ix<Lx;ix++) //for each cell
@@ -128,11 +139,12 @@ void LatticeBoltzmann::Advection(void){
       }
 }
 void LatticeBoltzmann::Print(const char * NameFile){
-  ofstream MyFile(NameFile); double rho0,Ux0,Uy0; int ix,iy;
+  ofstream MyFile(NameFile); double rho0; int ix,iy;
   for(ix=0;ix<Lx;ix++){
     for(iy=0;iy<Ly;iy++){
-      rho0=rho(ix,iy,true); Ux0=Jx(ix,iy,true)/rho0; Uy0=Jy(ix,iy,true)/rho0;
-      MyFile<<ix<<" "<<iy<<" "<<rho0<<endl;
+      rho0=rho(ix,iy,true);
+  // Solo la diagonal (0,0) a (Lx,Ly)
+        MyFile<<ix<<" "<<iy<<" "<<rho0<<endl;
     }
     MyFile<<endl;
   }
@@ -143,20 +155,23 @@ void LatticeBoltzmann::Print(const char * NameFile){
 
 int main(void){
   LatticeBoltzmann Aire;
-  int t,tmax=35;
-  double rho0=1000.0, Ux0=0.1,Uy0=0.1;
-  double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx / 32, sigma_y = Ly / 32; // Parámetros de la distribución gaussiana
+  int t,tmax=1000;  // Duración de la simulación
+  double A = 1000.0;  // Máxima densidad
+  double sigma0 = 6.4;  // Desviación estándar inicial
+  double D = 0.05;  // Coeficiente de difusión
+  double ux = 0.03, uy = 0.03;  // Velocidades
+  double x0 = 33.0, y0 = 33.0;  // Posición inicial
 
-  //Start
-  Aire.Start(rho0, Ux0, Uy0, mu_x, mu_y, sigma_x, sigma_y);
-  //Run
+  // Inicialización
+  Aire.Start(A, sigma0, D, ux, uy, x0, y0);
+  // Ejecutar
   for(t=0;t<tmax;t++){
     Aire.Collision();
-    Aire.ImposeFields(t);
+    Aire.ImposeFields(t, A, sigma0, D, ux, uy, x0, y0);
     Aire.Advection();
   }
-  //Show
-  Aire.Print("intentando.dat");
+  // Mostrar resultados
+  Aire.Print("resultados.dat");
 
-return 0;
+  return 0;
 }
