@@ -37,7 +37,7 @@ public:
   //----Evolucion temporal----
   void Start(double A, double sigma0, double D, double ux, double uy, double x0, double y0);
   void Collision(void);
-  void ImposeFields(int t, double A, double sigma0, double D, double ux, double uy, double x0, double y0);
+  void ImposeFields(int t);
   void Advection(void);
   void Print(const char * NameFile);
 };
@@ -111,23 +111,24 @@ void LatticeBoltzmann::Collision(void){
     }
 }
 
-void LatticeBoltzmann::ImposeFields(int t, double A, double sigma0, double D, double ux, double uy, double x0, double y0){
-    int ix, iy, i, n0;
-    double x0_t = x0 + ux * t;
-    double y0_t = y0 + uy * t;
-    double sigma_t2 = sigma0 * sigma0 + 2 * D * t;
 
-    for (ix = 0; ix < Lx; ix++) {
-        for (iy = 0; iy < Ly; iy++) {
-            double rho = A / sqrt(1 + 2 * D * t / sigma0) *
-                         exp(-(pow(ix - x0_t, 2) + pow(iy - y0_t, 2)) / (2 * sigma_t2));
-            for (i = 0; i < Q; i++) {
-                n0 = n(ix, iy, i);
-                fnew[n0] = feq(rho, ux, uy, i);
+void LatticeBoltzmann::ImposeFields(int t) {
+    // Implementación para imponer un campo de velocidad constante
+    double rho0, Ux0, Uy0;
+    for (int ix = 0; ix < Lx; ix++) {
+        for (int iy = 0; iy < Ly; iy++) {
+            rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
+            Ux0 = 0.03; // Velocidad en x
+            Uy0 = 0.03; // Velocidad en y
+            for (int i = 0; i < Q; i++) {
+                int n0 = n(ix, iy, i);
+                fnew[n0] = feq(rho0, Ux0, Uy0, i);
             }
         }
     }
 }
+
+
 void LatticeBoltzmann::Advection(void){
   int ix,iy,i,ixnext,iynext,n0,n0next;
   for(ix=0;ix<Lx;ix++) //for each cell
@@ -167,7 +168,7 @@ int main(void){
   // Ejecutar
   for(t=0;t<tmax;t++){
     Aire.Collision();
-    Aire.ImposeFields(t, A, sigma0, D, ux, uy, x0, y0);
+    Aire.ImposeFields(t);
     Aire.Advection();
   }
   // Mostrar resultados
