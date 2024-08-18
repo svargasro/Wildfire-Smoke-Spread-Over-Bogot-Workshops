@@ -2,6 +2,9 @@
 #include <cmath>
 #include <fstream>
 #include <cassert>  // Para las verificaciones
+#include <string>   // Add this line to include the <string> header
+#include <iomanip>  // iomap sirve para setw y setfill
+#include <sstream>  // Para usar stringstream
 
 using namespace std;
 
@@ -35,11 +38,12 @@ public:
     double Jy(int ix, int iy, bool UseNew);
     double feq(double rho0, double Ux0, double Uy0, int i);
     void Collision(void);
-    void ImposeFields(int t);
+    void ImposeFields(void);
     void Advection(void);
     void Start(double rho0, double Ux0, double Uy0, double mu_x, 
                   double mu_y, double sigma_x, double sigma_y);
-    void Print(const char* NameFile, double t);
+    void Print(string NameFile, double t);
+    void Printframe(double t);
 };
 
 LatticeBoltzmann::LatticeBoltzmann(void) {
@@ -103,7 +107,7 @@ double LatticeBoltzmann::feq(double rho0, double Ux0, double Uy0, int i) {
     return result;
 }
 
-//---------------------Evolución temporal---------------------
+// ---------------------Evolución temporal---------------------
 void LatticeBoltzmann::Start(double rho0, double Ux0, double Uy0, 
     double mu_x, double mu_y, double sigma_x, double sigma_y) {
     int ix, iy, i, n0;
@@ -122,6 +126,20 @@ void LatticeBoltzmann::Start(double rho0, double Ux0, double Uy0,
     }
 }
 
+// void LatticeBoltzmann::Start(double A, double sigma0, double D, double ux, double uy, double x0, double y0) {
+//     int ix, iy, i, n0;
+
+//     for (ix = 0; ix < Lx; ix++) {
+//         for (iy = 0; iy < Ly; iy++) {
+//             double rho = A * exp(-(pow(ix - x0, 2) + pow(iy - y0, 2)) / (2 * sigma0 * sigma0));
+//             for (i = 0; i < Q; i++) {
+//                 n0 = n(ix, iy, i);
+//                 f[n0] = feq(rho, ux, uy, i);
+//             }
+//         }
+//     }
+// }
+
 void LatticeBoltzmann::Collision(void) {
     int ix, iy, i, n0;
     double rho0, Ux0, Uy0;
@@ -139,27 +157,36 @@ void LatticeBoltzmann::Collision(void) {
     }
 }
 
-void LatticeBoltzmann::ImposeFields(int t) {
-    // Implementación de condiciones de frontera y otros campos impuestos
-}
-
-void LatticeBoltzmann::Advection(void) {
-    int ix, iy, i, n0, ix2, iy2, n0new;
-    for (ix = 0; ix < Lx; ix++) {
-        for (iy = 0; iy < Ly; iy++) {
-            for (i = 0; i < Q; i++) {
-                ix2 = (ix + Vx[i] + Lx) % Lx;
-                iy2 = (iy + Vy[i] + Ly) % Ly;
-                n0 = n(ix, iy, i);
-                n0new = n(ix2, iy2, i);
-                f[n0new] = fnew[n0]; // condiciones de frontera periódicas
+void LatticeBoltzmann::ImposeFields() {
+    // Implementación para imponer un campo de velocidad constante
+    double rho0, Ux0, Uy0;
+    for (int ix = 0; ix < Lx; ix++) {
+        for (int iy = 0; iy < Ly; iy++) {
+            rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
+            Ux0 = 0.03; // Velocidad en x
+            Uy0 = 0.03; // Velocidad en y
+            for (int i = 0; i < Q; i++) {
+                int n0 = n(ix, iy, i);
+                fnew[n0] = feq(rho0, Ux0, Uy0, i);
             }
         }
     }
 }
 
+void LatticeBoltzmann::Advection(void){
+    int ix,iy,i,ixnext,iynext,n0,n0next;
+    for(ix=0;ix<Lx;ix++) //for each cell
+        for(iy=0;iy<Ly;iy++)
+            for(i=0;i<Q;i++){ //on each direction
+                ixnext=(ix+Vx[i]+Lx)%Lx; 
+                iynext=(iy+Vy[i]+Ly)%Ly;
+                n0=n(ix,iy,i); n0next=n(ixnext,iynext,i);
+                f[n0next]=fnew[n0]; //periodic boundaries
+            }
+    }
+
 //---------------------Impresión de resultados---------------------
-void LatticeBoltzmann::Print(const char* NameFile, double t) {
+void LatticeBoltzmann::Print(string NameFile, double t) {
     ofstream MyFile(NameFile); 
     double rho0, Ux0, Uy0;
     for (int ix = 0; ix < Lx; ix += 4) {
@@ -168,19 +195,40 @@ void LatticeBoltzmann::Print(const char* NameFile, double t) {
             // Ux0 = Jx(ix, iy, true) / rho0; 
             // Uy0 = Jy(ix, iy, true) / rho0;
             // Imprimimos cada 4 celdas la densidad
-            MyFile << t << " " << ix << " " << iy << " " << rho0 << endl;
+            MyFile << ix << " " << iy << " " << rho0 << endl;
         }
         MyFile << endl;
     }
     MyFile.close();
 }
 
+
+void LatticeBoltzmann::Printframe(double t) {
+    ofstream GnuplotScript("frame_script.gp");
+    GnuplotScript << "set terminal pngcairo size 800,800 enhanced font 'Verdana,10'" << endl;
+    GnuplotScript << "set output 'frames/density_" << setw(3) << setfill('0') << t << ".png'" << endl;
+    GnuplotScript << "set pm3d map" << endl;
+    GnuplotScript << "set size ratio -1" << endl;
+    GnuplotScript << "set xrange [0:" << Lx << "]" << endl;
+    GnuplotScript << "set yrange [0:" << Ly << "]" << endl;
+    GnuplotScript << "set cbrange [0:*]" << endl;
+    GnuplotScript << "set palette defined (0 'black', 1 'red', 2 'yellow', 3 'white', 4 'red')" << endl;
+    GnuplotScript << "set title 'Densidad en t = " << t << "'" << endl; 
+    GnuplotScript << "plot 'data/density_" << setw(3) << setfill('0') << t << ".dat' u 1:2:3 w image" << endl;
+    GnuplotScript.close();
+
+    // Ejecutar el script de Gnuplot
+    system("gnuplot frame_script.gp");
+}
+
+
+
 int main(void) {
     LatticeBoltzmann Air;
 
     // Parámetros de la simulación
-    int t, tmax = 100;
-    double rho0 = 10000.0, Ux0 = 0.1, Uy0 = 0.1; // Densidad inicial y velocidad
+    int t ,tframe = 10, tmax = 100;
+    double rho0 = 10000.0, Ux0 = 0.3, Uy0 = 0.3; // Densidad inicial y velocidad
     double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx / 32, sigma_y = Ly / 32; // Parámetros de la distribución gaussiana
 
     // Iniciar la simulación
@@ -188,15 +236,44 @@ int main(void) {
 
     // Ejecutar la simulación
     for (t = 0; t <= tmax; t++) {
-        std:cout<<"Porcentaje de avance: "<<(t*100)/tmax<<"%"<<std::endl;   
+        std::cout << "Porcentaje de avance: " << (t * 100) / tmax << "%" << std::endl;
         Air.Collision();
-        Air.ImposeFields(t);
+        Air.ImposeFields();//Ux0, Uy0);
         Air.Advection();
-        Air.Print("Densidad.dat", t);
+        if (t % tframe == 0) {
+            // Imprimir los datos en archivo
+             stringstream ss;
+            ss << "data/density_" << setw(3) << setfill('0') << t << ".dat";
+            Air.Print(ss.str(), t);
+            // Generar y guardar el frame con Gnuplot
+            Air.Printframe(t);
+        }
     }
 
-    // Imprimir los resultados
-    Air.Print("AdvectionDifusion.dat", t);
 
+// int main(void){
+//   LatticeBoltzmann Aire;
+//   int t,tframe = 10 ,tmax=1000;  // Duración de la simulación
+//   double A = 1000.0;  // Máxima densidad
+//   double sigma0 = 6.4;  // Desviación estándar inicial
+//   double D = 0.05;  // Coeficiente de difusión
+//   double ux = 0.03, uy = 0.03;  // Velocidades
+//   double x0 = 33.0, y0 = 33.0;  // Posición inicial
+
+//   // Inicialización
+//   Aire.Start(A, sigma0, D, ux, uy, x0, y0);
+//   // Ejecutar
+//   for(t=0;t<tmax;t++){
+//     Aire.Collision();
+//     Aire.ImposeFields();
+//     Aire.Advection();
+//         if (t % tframe == 0) {
+//             // Imprimir los datos en archivo
+//             Aire.Print("data/density_" + to_string(t) + ".dat", t);
+//             // Generar y guardar el frame con Gnuplot
+//             Aire.Printframe(t);
+//         }
+//     }
     return 0;
 }
+

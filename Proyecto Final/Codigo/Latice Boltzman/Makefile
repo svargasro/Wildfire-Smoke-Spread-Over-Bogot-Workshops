@@ -1,10 +1,10 @@
 GCC = g++
 CFLAGS = -O3 --std=c++17
 
-TARGET = $(patsubst %.cpp,%,$(wildcard *.cpp))
+TARGET = LB_AdvectionDifusion_D2Q9copy
 # TARGET = $(patsubst %.cpp,%,$(wildcard *.py))
 
-all: ejecutar graficar gif
+all: ejecutar gif clean
 
 $(TARGET).x: $(TARGET).cpp
 	$(GCC) $(CFLAGS) -o $@ $<
@@ -12,15 +12,9 @@ $(TARGET).x: $(TARGET).cpp
 ejecutar: $(TARGET).x
 	./$<	
 
-graficar: 
-	gnuplot grafica.gp
-
 gif: 
-	mkdir -p frames
-	gnuplot frames.gp
 	convert -delay 25 -loop 0 frames/*.png AdvectionDifusion.gif
-	rm -rf frames
 .PHONY: clean
 
 clean:
-	rm -f *.x *.dat 
+	rm -f *.x frames/*.png data/*.dat
