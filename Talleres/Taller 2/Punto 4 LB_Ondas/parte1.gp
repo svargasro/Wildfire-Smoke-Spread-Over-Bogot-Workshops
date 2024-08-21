@@ -8,4 +8,4 @@ set palette defined (0 "#440154", 1 "#482777", 2 "#3E4A89", 3 "#31688E", 4 "#268
 set title "Refracción de ondas planas" font "Arial,16"
 set xlabel "Eje X" font "Arial,14"
 set ylabel "Eje Y" font "Arial,14"
-splot "parte1.dat"
+splot "Ondas.dat"
