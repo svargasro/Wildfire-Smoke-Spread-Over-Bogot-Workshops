@@ -14,7 +14,6 @@ const int Ly = 256;
 
 const int Q = 9; // Número de direcciones en el espacio de velocidades
 const double W0 = 1.0 / 3; //
-
 const double C = 0.5; // C < sqrt(2)=0.707 cells/click: Velocidad de propagación de la onda
 const double C2 = C * C; // C^2
 const double Cs2 = C2 / 3.0; // c_s^2
@@ -23,12 +22,18 @@ const double tau = 0.55; // Tiempo de relajación
 const double Utau = 1.0 / tau; // Inverso del tiempo de relajación
 const double UmUtau = 1 - Utau; // 1 - 1/tau
 
+//-------------------------------Constantes terminos de fuente--------------------
+const double S = 0.0; // Término de fuente
+
+
+//-------------------------------CLASES--------------------------------------
+
 //--------------------- class LatticeBoltzmann ------------
 class LatticeBoltzmann {
 private:
     double w[Q];      // Pesos
     int Vx[Q], Vy[Q]; // Vectores de velocidad
-    double *f, *fnew; // Funciones de distribución
+    double *f, *fnew, *Sl; // Funciones de distribución
 public:
     LatticeBoltzmann(void);
     ~LatticeBoltzmann(void);
@@ -56,7 +61,7 @@ LatticeBoltzmann::LatticeBoltzmann(void) {
     Vy[5] = 1;  Vy[6] = 1;  Vy[7] = -1; Vy[8] = -1;
     // Create the dynamic arrays
     int ArraySize = Lx * Ly * Q;
-    f = new double[ArraySize];  fnew = new double[ArraySize];
+    f = new double[ArraySize];  fnew = new double[ArraySize]; Sl = new double[ArraySize];
 }
 
 LatticeBoltzmann::~LatticeBoltzmann(void) {
@@ -106,6 +111,8 @@ double LatticeBoltzmann::feq(double rho0, double Ux0, double Uy0, int i) {
     assert(!std::isnan(result));
     return result;
 }
+
+//-------------------Función
 
 // ---------------------Evolución temporal---------------------
 void LatticeBoltzmann::Start(double rho0, double Ux0, double Uy0, 
