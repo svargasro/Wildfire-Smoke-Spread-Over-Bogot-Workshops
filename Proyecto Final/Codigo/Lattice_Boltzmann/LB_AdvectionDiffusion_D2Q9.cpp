@@ -3,9 +3,6 @@
 #include <fstream>
 #include <string>  // Add this line to include the <string> header
 #include <iomanip> // iomap sirve para setw y setfill
-#include <sstream> // Para usar stringstream
-
-using namespace std;
 
 //-------------------------------CONSTANTES GLOBASLES------------------------
 const int Lx = 256;
@@ -50,7 +47,7 @@ public:
     void Advection(void);
     void Start(double rho0, double Ux0, double Uy0, double mu_x,
                double mu_y, double sigma_x, double sigma_y);
-    void Print(string NameFile, double t);
+    void Print(std::string NameFile, double t);
     void Printframe(double t);
 };
 
@@ -241,18 +238,18 @@ void LatticeBoltzman::Advection(void)
 }
 
 //---------------------Impresión de resultados---------------------
-void LatticeBoltzman::Print(string NameFile, double t)
+void LatticeBoltzman::Print(std::string NameFile, double t)
 {
-    ofstream MyFile(NameFile);
+    std::ofstream MyFile(NameFile);
     double rho0, Ux0, Uy0;
     for (int ix = 0; ix < Lx; ix += 4)
     {
         for (int iy = 0; iy < Ly; iy += 4)
         {
             rho0 = rho(ix, iy, true);
-            MyFile << ix << " " << iy << " " << rho0 << endl;
+            MyFile << ix << " " << iy << " " << rho0 << std::endl;
         }
-        MyFile << endl;
+        MyFile << std::endl;
     }
     MyFile.close();
 }
@@ -260,25 +257,27 @@ void LatticeBoltzman::Print(string NameFile, double t)
 void LatticeBoltzman::Printframe(double t)
 {
     // Check if the "frames" directory exists, if not, create it
-    if (system("test -d frames") != 0)
-    {
-        system("mkdir frames");
+    int ret;
+    if (system("test -d frames") != 0){
+        ret = system("mkdir frames");
+        if (ret != 0) std::cerr << "Error: No se pudo crear el directorio frames." << std::endl;
     }
-    ofstream GnuplotScript("frame_script.gp");
-    GnuplotScript << "set terminal pngcairo size 800,800 enhanced font 'Verdana,10'" << endl;
-    GnuplotScript << "set output 'frames/density_" << setw(3) << setfill('0') << t << ".png'" << endl;
-    GnuplotScript << "set pm3d map" << endl;
-    GnuplotScript << "set size ratio -1" << endl;
-    GnuplotScript << "set xrange [0:" << Lx << "]" << endl;
-    GnuplotScript << "set yrange [0:" << Ly << "]" << endl;
-    GnuplotScript << "set cbrange [0:*]" << endl;
-    GnuplotScript << "set palette defined (0 'black', 1 'red', 2 'yellow', 3 'white', 4 'red')" << endl;
-    GnuplotScript << "set title 'Densidad en t = " << t << "'" << endl;
-    GnuplotScript << "plot 'data/density_" << setw(3) << setfill('0') << t << ".dat' u 1:2:3 w image" << endl;
+    std::ofstream GnuplotScript("frame_script.gp");
+    GnuplotScript << "set terminal pngcairo size 800,800 enhanced font 'Verdana,10'" << std::endl;
+    GnuplotScript << "set output 'frames/density_" << std::setw(3) << std::setfill('0') << t << ".png'" << std::endl;
+    GnuplotScript << "set pm3d map" << std::endl;
+    GnuplotScript << "set size ratio -1" << std::endl;
+    GnuplotScript << "set xrange [0:" << Lx << "]" << std::endl;
+    GnuplotScript << "set yrange [0:" << Ly << "]" << std::endl;
+    GnuplotScript << "set cbrange [0:*]" << std::endl;
+    GnuplotScript << "set palette defined (0 'black', 1 'red', 2 'yellow', 3 'white', 4 'red')" << std::endl;
+    GnuplotScript << "set title 'Densidad en t = " << t << "'" << std::endl;
+    GnuplotScript << "plot 'data/density_" << std::setw(3) << std::setfill('0') << t << ".dat' u 1:2:3 w image" << std::endl;
     GnuplotScript.close();
 
     // Ejecutar el script de Gnuplot
-    system("gnuplot frame_script.gp");
+    ret = system("gnuplot frame_script.gp");
+    if (ret != 0) std::cerr << "Error: No se pudo ejecutar el script de gnuplot" << std::endl;
 }
 
 int main(void)
@@ -286,7 +285,7 @@ int main(void)
     LatticeBoltzman Air;
 
     // Parámetros de la simulación
-    int t, tframe = 100, tmax = 1000, delta_t = 1;
+    int t, tframe = 100, tmax = 1000, delta_t = 1, ret;
     double rho0 = 10000.0, Ux0 = 0.3, Uy0 = 0.3;                               // Densidad inicial y velocidad
     double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx / 32, sigma_y = Ly / 32; // Parámetros de la distribución gaussiana
 
@@ -302,18 +301,18 @@ int main(void)
         Air.Advection();
         if (t % tframe == 0)
         {
-            if (system("test -d data") != 0)
-            {
-                system("mkdir data");
+            if (system("test -d data") != 0){
+                ret = system("mkdir data");
+                if (ret != 0) std::cerr << "Error: No se pudo crear el directorio data." << std::endl;
             }
             // Imprimir los datos en archivo
-            stringstream ss;
-            ss << "data/density_" << setw(3) << setfill('0') << t << ".dat";
+            std::stringstream ss;
+            ss << "data/density_" << std::setw(3) << std::setfill('0') << t << ".dat";
             Air.Print(ss.str(), t);
             // Generar y guardar el frame con Gnuplot
             Air.Printframe(t);
+            std::cout << "Porcentaje de avance: " << (t * 100) / tmax << "%" << std::endl;
         }
-        std::cout << "Porcentaje de avance: " << (t * 100) / tmax << "%" << std::endl;
     }
 
     delete[] S;

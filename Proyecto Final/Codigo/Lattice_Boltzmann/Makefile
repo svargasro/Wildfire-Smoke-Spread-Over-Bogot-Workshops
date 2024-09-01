@@ -2,7 +2,7 @@ GCC = g++
 CFLAGS = -O3 --std=c++17
 
 
-TARGET = LB_AdvectionDifusion_D2Q9
+TARGET = LB_AdvectionDiffusion_D2Q9
 # TARGET = $(patsubst %.cpp,%,$(wildcard *.py))
 
 all: ejecutar gif 
@@ -19,5 +19,5 @@ gif:
 .PHONY: clean
 
 clean:
-	rm *.x  *.gp
+	rm *.x  *.gp 
 	rm -r frames data
