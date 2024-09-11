@@ -6,8 +6,8 @@
 #include <algorithm> // std::fill
 
 //-------------------------------CONSTANTES GLOBASLES------------------------
-const int Lx = 256;
-const int Ly = 256;
+const int Lx = 10;
+const int Ly = 14;
 
 const int Q = 9;// Número de direcciones en el espacio de velocidades
 
@@ -43,8 +43,8 @@ public:
     double Jx(int ix, int iy, bool UseNew);
     double Jy(int ix, int iy, bool UseNew);
     double feq(double rho0, double Ux0, double Uy0, int i);
-    double fsource(double rho0, double Ux0, double Uy0, int i, int ind);
-    double dif_fsource(double rho0, double Ux0, double Uy0, int i, int ind, double delta_t);
+    //double fsource(double rho0, double Ux0, double Uy0, int i, int ind);
+    //double dif_fsource(double rho0, double Ux0, double Uy0, int i, int ind, double delta_t);
     void Collision(double delta_t);
     void ImposeFields(void);
     void Advection(void);
@@ -70,8 +70,9 @@ LatticeBoltzman::LatticeBoltzman(void){
 
     // Create the dynamic arrays
     int ArraySize = Lx * Ly * Q;
-    f = new double[ArraySize];
-    fnew = new double[ArraySize];
+    f = new double[ArraySize]();
+    fnew = new double[ArraySize]();
+    //std::cout<<"f: "<<fnew[100]<<std::endl;
 }
 
 LatticeBoltzman::~LatticeBoltzman(void){
@@ -88,6 +89,7 @@ double LatticeBoltzman::rho(int ix, int iy, bool UseNew){
         if (UseNew) sum += fnew[n0];
         else sum += f[n0];
     }  
+    //std::cout<<"rho: "<<sum<<std::endl;
     return sum;
 }
 
@@ -121,7 +123,7 @@ double LatticeBoltzman::feq(double rho0, double Ux0, double Uy0, int i){
 
     return result;
 }
-
+/*
 //-------------------Función de fuente-------------------
 double LatticeBoltzman::fsource(double rho0, double Ux0, double Uy0, int i, int ind){
     double UdotVi = Ux0 * Vx[i] + Uy0 * Vy[i];
@@ -138,7 +140,7 @@ double LatticeBoltzman::dif_fsource(double rho0, double Ux0, double Uy0, int i, 
     double result = S[ind]*w[i]*(1 + (tau - 0.5)/((tau - theta*0.5)*Cs2)*(UdotVi-delta_t*DtUdotVi))/delta_t;
     return result;
 }
-
+*/
 
 // ---------------------Evolución temporal---------------------
 void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
@@ -155,11 +157,11 @@ void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
             for (i = 0; i < Q; i++){
                 n0 = n(ix, iy, i);
                 f[n0] = feq(rho, Ux0, Uy0, i);
+                //std::cout<<"f: "<<f[n0]<<std::endl;
             }
         }
     }
 }
-
 
 void LatticeBoltzman::Collision(double delta_t){
     int ix, iy, i, n0;
@@ -172,10 +174,9 @@ void LatticeBoltzman::Collision(double delta_t){
             int ind = (ix * Ly + iy); //Linealizacion de la cuadrícula
             for (i = 0; i < Q; i++){
                 n0 = n(ix, iy, i);
-                source = delta_t*fsource(rho0, Ux0, Uy0, i, ind);
-                dif_source = delta_t*delta_t*dif_fsource(rho0, Ux0, Uy0, i, ind, delta_t)*0.5; 
-                fnew[n0] = UmUtau * f[n0] + Utau * feq(rho0, Ux0, Uy0, i) + source + dif_source;
-                //std::cout<<"Source: "<<source<<std::endl;
+                //source = delta_t*fsource(rho0, Ux0, Uy0, i, ind);
+                //dif_source = delta_t*delta_t*dif_fsource(rho0, Ux0, Uy0, i, ind, delta_t)*0.5; 
+                fnew[n0] = UmUtau * f[n0] + Utau * feq(rho0, Ux0, Uy0, i);
             }
         }
     }
@@ -192,8 +193,14 @@ void LatticeBoltzman::ImposeFields(){
             for (int i = 0; i < Q; i++){
                 int n0 = n(ix, iy, i);
                 fnew[n0] = feq(rho0, Ux0, Uy0, i);
+                }
+            if(ix == 0 || ix == Lx-1 || iy == 0 || iy == Ly-1){
+                for (int i = 0; i < Q; i++){
+                    int n0 = n(ix, iy, i);
+                    fnew[n0] = feq(1e7, 0, 0, i);
+                }
             }
-        }
+        }   
     }
 }
 
@@ -218,9 +225,9 @@ void LatticeBoltzman::Print(std::string NameFile, double t){
     std::ofstream MyFile(NameFile);
     double rho0, Ux0, Uy0;
 
-    for (int ix = 0; ix < Lx; ix += 4){
-        for (int iy = 0; iy < Ly; iy += 4){
-            rho0 = rho(ix, iy, true);
+    for (int ix = 0; ix < Lx; ix++){
+        for (int iy = 0; iy < Ly; iy++){
+            rho0 = rho(ix, iy, false);
             MyFile << ix << " " << iy << " " << rho0 << std::endl;
         }
         MyFile << std::endl;
@@ -255,9 +262,9 @@ void LatticeBoltzman::Printframe(double t){
 
 int main(int argc, char* argv[]){
     // Parámetros de la simulación
-    int t, tframe = 100, tmax = 1000, delta_t = 1, ret;
-    double rho0 = 10000.0, Ux0 = 0.3, Uy0 = 0.3;                               // Densidad inicial y velocidad
-    double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx / 32, sigma_y = Ly / 32; // Parámetros de la distribución gaussiana
+    int tframe = 1, tmax = 10, delta_t = 1, ret;
+    double rho0 = 1, Ux0 = 0.3, Uy0 = 0.3;                               // Densidad inicial y velocidad
+    double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx/2, sigma_y = Ly/2; // Parámetros de la distribución gaussiana
     LatticeBoltzman Air;
 
     // Parámetros a ajustar
@@ -273,7 +280,7 @@ int main(int argc, char* argv[]){
     Air.Start(rho0, Ux0, Uy0, mu_x, mu_y, sigma_x, sigma_y);
 
     // Ejecutar la simulación
-    for (t = 0; t <= tmax; t++)
+    for (int t = 0; t <= tmax; t++)
     {
         
         Air.Collision(delta_t);
