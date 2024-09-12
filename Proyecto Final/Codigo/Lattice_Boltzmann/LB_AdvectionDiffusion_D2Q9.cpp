@@ -7,8 +7,8 @@
 
 //-------------------------------CONSTANTES GLOBALES------------------------
 // Dimensiones de la cuadrícula
-const int Lx = 256;
-const int Ly = 256;
+const int Lx = 10; // 100
+const int Ly = 14; // 140
 
 // Número de direcciones en el espacio de velocidades
 const int Q = 9;
@@ -22,9 +22,6 @@ const double Cs2 = Cs * Cs;    // Velocidad de la onda sonora al cuadrado
 const double theta = 1;
 
 //-------------------------------VARIABLES GLOBALES------------------------
-// Término de fuente para cada celda en la cuadrícula
-double S_glob;                     // Término de fuente global para toda la cuadrícula
-double *S = new double[Lx * Ly](); // Inicializa todos los valores a 0.0
 
 // Parámetros de difusión y relajación
 double D;      // Coeficiente de difusión
@@ -39,22 +36,22 @@ class LatticeBoltzman
 private:
     double w[Q];               // Pesos de las direcciones
     int Vx[Q], Vy[Q];          // Vectores de velocidad en las direcciones x e y
-    double *f_prev, *f, *fnew; // Funciones de distribución para los diferentes estados (previo, actual y nuevo)
+    double *f, *fnew; // Funciones de distribución para los diferentes estados (previo, actual y nuevo)
 
 public:
     LatticeBoltzman(void);                                                                                     // Constructor
     ~LatticeBoltzman(void);                                                                                    // Destructor
     int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i; };                                           // Conversión de índices 2D a 1D
-    double rho(int ix, int iy, int mode);                                                                      // Cálculo de la densidad
-    double Jx(int ix, int iy, int mode);                                                                       // Cálculo del flujo en x
-    double Jy(int ix, int iy, int mode);                                                                       // Cálculo del flujo en y
+    double rho(int ix, int iy, bool UseNew);                                                                 // Cálculo de la densidad
+    double Jx(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en x
+    double Jy(int ix, int iy, bool UseNew);                                                   // Cálculo del flujo en y
     double feq(double rho0, double Ux0, double Uy0, int i);                                                    // Función de equilibrio
     double fsource(double rho0, double Ux0, double Uy0, int i, int ind);                                       // Término de fuente
     void Collision(double delta_t);                                                                            // Fase de colisión
     void ImposeFields(double Ux0, double Uy0);                                                                 // Imponer campos de velocidad
     void Advection(void);                                                                                      // Fase de advección
     void Start(double rho0, double Ux0, double Uy0, double mu_x, double mu_y, double sigma_x, double sigma_y); // Inicialización
-    void PrintData(std::string NameFile, double t);                                                                // Imprimir resultados a archivo
+    void PrintData(std::string NameFile, double t);                                                            // Imprimir resultados a archivo
     void PrintFrame(double t);                                                                                 // Generar y guardar el frame de la simulación
 };
 
@@ -78,6 +75,7 @@ LatticeBoltzman::LatticeBoltzman(void)
     Vx[7] = -1;
     Vx[3] = -1;
     Vx[6] = -1;
+
     Vy[8] = -1;
     Vy[1] = 0;
     Vy[5] = 1;
@@ -90,7 +88,7 @@ LatticeBoltzman::LatticeBoltzman(void)
 
     // Creación de los arreglos dinámicos para las funciones de distribución
     int ArraySize = Lx * Ly * Q;
-    f_prev = new double[ArraySize]();
+
     f = new double[ArraySize]();
     fnew = new double[ArraySize]();
 }
@@ -98,76 +96,42 @@ LatticeBoltzman::LatticeBoltzman(void)
 // Destructor: libera la memoria dinámica
 LatticeBoltzman::~LatticeBoltzman(void)
 {
-    delete[] f_prev;
     delete[] f;
     delete[] fnew;
 }
 
 // Función para calcular la densidad macroscópica (rho)
-double LatticeBoltzman::rho(int ix, int iy, int mode)
-{
+//---------------------Campos macroscópicos---------------------
+double LatticeBoltzman::rho(int ix, int iy, bool UseNew){
     double sum = 0;
-    for (int i = 0; i < Q; i++)
-    {
+    for (int i = 0; i < Q; i++){
         int n0 = n(ix, iy, i);
-        switch (mode)
-        {
-        case 0:
-            sum += f[n0];
-            break; // Usa f (estado actual)
-        case 1:
-            sum += fnew[n0];
-            break; // Usa fnew (estado nuevo)
-        case 2:
-            sum += f_prev[n0];
-            break; // Usa f_prev (estado previo)
-        }
-    }
+
+        if (UseNew) sum += fnew[n0];
+        else sum += f[n0];
+    }  
+    //std::cout<<"rho: "<<sum<<std::endl;
     return sum;
 }
-
 // Función para calcular el flujo en la dirección x
-double LatticeBoltzman::Jx(int ix, int iy, int mode)
-{
+double LatticeBoltzman::Jx(int ix, int iy, bool UseNew){
     double sum = 0;
-    for (int i = 0; i < Q; i++)
-    {
+    for (int i = 0; i < Q; i++){
         int n0 = n(ix, iy, i);
-        switch (mode)
-        {
-        case 0:
-            sum += Vx[i] * f[n0];
-            break;
-        case 1:
-            sum += Vx[i] * fnew[n0];
-            break;
-        case 2:
-            sum += Vx[i] * f_prev[n0];
-            break;
-        }
+
+        if (UseNew) sum += Vx[i] * fnew[n0];
+        else sum += Vx[i] * f[n0];
     }
     return sum;
 }
-
 // Función para calcular el flujo en la dirección y
-double LatticeBoltzman::Jy(int ix, int iy, int mode)
-{
+double LatticeBoltzman::Jy(int ix, int iy, bool UseNew){
     double sum = 0;
-    for (int i = 0; i < Q; i++)
-    {
+    for (int i = 0; i < Q; i++){
         int n0 = n(ix, iy, i);
-        switch (mode)
-        {
-        case 0:
-            sum += Vy[i] * f[n0];
-            break;
-        case 1:
-            sum += Vy[i] * fnew[n0];
-            break;
-        case 2:
-            sum += Vy[i] * f_prev[n0];
-            break;
-        }
+
+        if (UseNew) sum += Vy[i] * fnew[n0];
+        else sum += Vy[i] * f[n0];
     }
     return sum;
 }
@@ -181,27 +145,18 @@ double LatticeBoltzman::feq(double rho0, double Ux0, double Uy0, int i)
     return result;
 }
 
-//----------------------Función de fuente---------------------
-
-// Término de fuente para la fase de colisión
-double LatticeBoltzman::fsource(double rho0, double Ux0, double Uy0, int i, int ind)
-{
-    double UdotVi = Ux0 * Vx[i] + Uy0 * Vy[i];
-    double result = w[i] * S[ind] * (1 + ((tau - 0.5) * UdotVi) / ((tau - theta * 0.5) * Cs2));
-    return result;
-}
-
 // ---------------------Evolución temporal---------------------
 
 // Inicialización de la función de distribución y condiciones iniciales
 void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
-                            double mu_x, double mu_y, double sigma_x, double sigma_y){
+                            double mu_x, double mu_y, double sigma_x, double sigma_y)
+{
     int ix, iy, i, n0;
 
     // Recorre toda la cuadrícula de celdas
-    for (ix = 0; ix < Lx; ix++)  // Para cada celda en el eje x
+    for (ix = 0; ix < Lx; ix++) // Para cada celda en el eje x
     {
-        for (iy = 0; iy < Ly; iy++)  // Para cada celda en el eje y
+        for (iy = 0; iy < Ly; iy++) // Para cada celda en el eje y
         {
             // Calcular el valor de la función gaussiana en las direcciones x e y
             double gauss_x = exp(-0.5 * pow((ix - mu_x) / sigma_x, 2)) / (sigma_x * sqrt(2 * M_PI));
@@ -211,13 +166,11 @@ void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
             double rho = rho0 * gauss_x * gauss_y;
 
             // Inicializar las funciones de distribución en todas las direcciones de velocidad
-            for (i = 0; i < Q; i++)  // Para cada dirección de la función de distribución
+            for (i = 0; i < Q; i++) // Para cada dirección de la función de distribución
             {
-                n0 = n(ix, iy, i);  // Convertir los índices 2D a 1D
-
+                n0 = n(ix, iy, i); // Convertir los índices 2D a 1D
                 // Establecer la función de distribución de equilibrio como valor inicial
-                f[n0] = feq(rho, Ux0, Uy0, i);  // Inicializa f
-                f_prev[n0] = feq(rho, Ux0, Uy0, i);  // Inicializa f_prev con el mismo valor
+                f[n0] = feq(rho, Ux0, Uy0, i); // Inicializa f
             }
         }
     }
@@ -227,9 +180,7 @@ void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
 void LatticeBoltzman::Collision(double delta_t)
 {
     int ix, iy, i, n0;
-    int x_prev, y_prev;
-    double rho0, Ux0, Uy0, source, source_prev;
-    double rho_prev0, Ux_prev0, Uy_prev0, Jx_prev0, Jy_prev0;
+    double rho0, Ux0, Uy0;
 
     for (ix = 0; ix < Lx; ix++)
     {
@@ -238,61 +189,34 @@ void LatticeBoltzman::Collision(double delta_t)
             rho0 = rho(ix, iy, 0);      // Calcula la densidad actual
             Ux0 = Jx(ix, iy, 0) / rho0; // Flujo en x
             Uy0 = Jy(ix, iy, 0) / rho0; // Flujo en y
-
-            x_prev = (ix - Vx[i] + Lx) % Lx; // Índices previos con condiciones periódicas
-            y_prev = (iy - Vy[i] + Ly) % Ly;
-
-            rho_prev0 = rho(x_prev, y_prev, 2); // Densidad previa
-            Ux_prev0 = Jx(x_prev, y_prev, 2) / rho_prev0;
-            Uy_prev0 = Jy(x_prev, y_prev, 2) / rho_prev0;
-
-            int ind = (ix * Ly + iy); // Linealización de la cuadrícula
+            int ind = (ix * Ly + iy);   // Linealización de la cuadrícula
             for (i = 0; i < Q; i++)
             {
                 n0 = n(ix, iy, i);
-                source = fsource(rho0, Ux0, Uy0, i, ind);
-                source_prev = fsource(rho0, Ux_prev0, Uy_prev0, i, ind);
-                fnew[n0] = UmUtau * f[n0] + Utau * feq(rho0, Ux0, Uy0, i) + delta_t * (1.5 * source - 0.5 * source_prev);
+                fnew[n0] = UmUtau * f[n0] + Utau * feq(rho0, Ux0, Uy0, i)
             }
         }
     }
 }
 
-// Fase de colisión: actualiza las funciones de distribución
-void LatticeBoltzman::Collision(double delta_t)
+// Imponer campos de velocidad
+void LatticeBoltzman::ImposeFields(double Ux0, double Uy0)
 {
-    int ix, iy, i, n0;
-    int x_prev, y_prev;
-    double rho0, Ux0, Uy0, source, source_prev;
-    double rho_prev0, Ux_prev0, Uy_prev0, Jx_prev0, Jy_prev0;
-
-    for (ix = 0; ix < Lx; ix++)
+    // Implementación para imponer un campo de velocidad constante
+    double rho0;
+    for (int ix = 0; ix < Lx; ix++)
     {
-        for (iy = 0; iy < Ly; iy++)
+        for (int iy = 0; iy < Ly; iy++)
         {
-            rho0 = rho(ix, iy, 0);      // Calcula la densidad actual
-            Ux0 = Jx(ix, iy, 0) / rho0; // Flujo en x
-            Uy0 = Jy(ix, iy, 0) / rho0; // Flujo en y
-
-            x_prev = (ix - Vx[i] + Lx) % Lx; // Índices previos con condiciones periódicas
-            y_prev = (iy - Vy[i] + Ly) % Ly;
-
-            rho_prev0 = rho(x_prev, y_prev, 2); // Densidad previa
-            Ux_prev0 = Jx(x_prev, y_prev, 2) / rho_prev0;
-            Uy_prev0 = Jy(x_prev, y_prev, 2) / rho_prev0;
-
-            int ind = (ix * Ly + iy); // Linealización de la cuadrícula
-            for (i = 0; i < Q; i++)
+            rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
+            for (int i = 0; i < Q; i++)
             {
-                n0 = n(ix, iy, i);
-                source = fsource(rho0, Ux0, Uy0, i, ind);
-                source_prev = fsource(rho0, Ux_prev0, Uy_prev0, i, ind);
-                fnew[n0] = UmUtau * f[n0] + Utau * feq(rho0, Ux0, Uy0, i) + delta_t * (1.5 * source - 0.5 * source_prev);
+                int n0 = n(ix, iy, i);
+                fnew[n0] = feq(rho0, Ux0, Uy0, i);
             }
         }
     }
 }
-
 
 // Fase de advección: actualiza las funciones de distribución con condiciones periódicas
 void LatticeBoltzman::Advection(void)
@@ -307,10 +231,8 @@ void LatticeBoltzman::Advection(void)
             {
                 ixnext = (ix + Vx[i] + Lx) % Lx; // Condiciones periódicas en x
                 iynext = (iy + Vy[i] + Ly) % Ly; // Condiciones periódicas en y
-                n0 = n(ix, iy, i);
-                n0next = n(ixnext, iynext, i);
-                f_prev[n0next] = fnew[n0]; // Actualiza el estado previo
-                f[n0next] = fnew[n0];      // Actualiza el estado actual
+                n0 = n(ix, iy, i);               // Índice actual
+                f[n0next] = fnew[n0];            // Actualiza el estado actual
             }
         }
     }
@@ -361,17 +283,17 @@ void LatticeBoltzman::PrintFrame(double t)
     // Crear el archivo de script para Gnuplot
     std::ofstream GnuplotScript("frame_script.gp");
 
-    GnuplotScript << "set terminal pngcairo size 800,800 enhanced font 'Verdana,10'" << std::endl;                              // Configuración del terminal de salida para Gnuplot, generando imágenes PNG
-    GnuplotScript << "set output 'frames/density_" << std::setw(3) << std::setfill('0') << t << ".png'" << std::endl;           // Nombre del archivo de salida PNG, numerado según el tiempo de simulación
-    GnuplotScript << "set pm3d map" << std::endl;                                                                               // Usar un mapa de calor (pm3d) para visualizar los datos
-    GnuplotScript << "set size ratio -1" << std::endl;                                                                          // Mantener una relación de aspecto cuadrada
-    GnuplotScript << "set xrange [0:" << Lx << "]" << std::endl;                                                                // Definir los límites de los ejes x e y, basados en las dimensiones de la cuadrícula
+    GnuplotScript << "set terminal pngcairo size 800,800 enhanced font 'Verdana,10'" << std::endl;                    // Configuración del terminal de salida para Gnuplot, generando imágenes PNG
+    GnuplotScript << "set output 'frames/density_" << std::setw(3) << std::setfill('0') << t << ".png'" << std::endl; // Nombre del archivo de salida PNG, numerado según el tiempo de simulación
+    GnuplotScript << "set pm3d map" << std::endl;                                                                     // Usar un mapa de calor (pm3d) para visualizar los datos
+    GnuplotScript << "set size ratio -1" << std::endl;                                                                // Mantener una relación de aspecto cuadrada
+    GnuplotScript << "set xrange [0:" << Lx << "]" << std::endl;                                                      // Definir los límites de los ejes x e y, basados en las dimensiones de la cuadrícula
     GnuplotScript << "set yrange [0:" << Ly << "]" << std::endl;
-    GnuplotScript << "set cbrange [0:*]" << std::endl;                                                                          // Configurar la escala de colores (color bar) para los valores de densidad
-    GnuplotScript << "set palette defined (0 'black', 1 'red', 2 'orange', 3 'yellow', 4 'white')" << std::endl;                // Definir la paleta de colores, de negro a blanco pasando por rojo, naranja y amarillo
-    GnuplotScript << "set title 'Densidad en t = " << t << "'" << std::endl;                                                    // Definir el título del gráfico, basado en el tiempo de simulación actual
-    GnuplotScript << "plot 'data/density_" << std::setw(3) << std::setfill('0') << t << ".dat' u 1:2:3 w image" << std::endl;   // Instrucción para graficar los datos de densidad desde el archivo correspondiente
-    GnuplotScript.close();                                                                                                       // Cerrar el archivo de script
+    GnuplotScript << "set cbrange [0:*]" << std::endl;                                                                        // Configurar la escala de colores (color bar) para los valores de densidad
+    GnuplotScript << "set palette defined (0 'black', 1 'red', 2 'orange', 3 'yellow', 4 'white')" << std::endl;              // Definir la paleta de colores, de negro a blanco pasando por rojo, naranja y amarillo
+    GnuplotScript << "set title 'Densidad en t = " << t << "'" << std::endl;                                                  // Definir el título del gráfico, basado en el tiempo de simulación actual
+    GnuplotScript << "plot 'data/density_" << std::setw(3) << std::setfill('0') << t << ".dat' u 1:2:3 w image" << std::endl; // Instrucción para graficar los datos de densidad desde el archivo correspondiente
+    GnuplotScript.close();                                                                                                    // Cerrar el archivo de script
 
     // Ejecutar el script de Gnuplot para generar la imagen PNG
     ret = system("gnuplot frame_script.gp");
@@ -379,7 +301,7 @@ void LatticeBoltzman::PrintFrame(double t)
         std::cerr << "Error: No se pudo ejecutar el script de gnuplot" << std::endl;
 }
 
-//Funcion main
+// Funcion main
 int main(int argc, char *argv[])
 {
     // Parámetros generales de la simulación
@@ -387,17 +309,14 @@ int main(int argc, char *argv[])
     double rho0 = 10000.0, Ux0 = 0.03, Uy0 = 0.03;     // Densidad inicial y velocidades iniciales en x e y
 
     // Parámetros para la distribución gaussiana que inicializa la densidad
-    double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx / 16, sigma_y = Ly / 16; // Parámetros de la gaussiana: centro (mu_x, mu_y), sigma: ancho
+    double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx / 2, sigma_y = Ly / 2; // Parámetros de la gaussiana: centro (mu_x, mu_y), sigma: ancho
 
     // Crear una instancia de la clase LatticeBoltzman
     LatticeBoltzman Air;
 
     // Leer parámetros desde la línea de comandos: término de fuente y coeficiente de difusión
-    S_glob = std::stod(argv[1]); // Término de fuente global
     D = std::stod(argv[2]);      // Coeficiente de difusión (ejemplo: 0.016 -> tau = 0.548)
 
-    // Inicializar la cuadrícula con el término de fuente global
-    std::fill(S, S + Lx * Ly, S_glob);
 
     // Calcular el tiempo de relajación tau basado en el coeficiente de difusión y el paso de tiempo
     tau = (D / delta_t * Cs2) + 0.5;
@@ -431,7 +350,7 @@ int main(int argc, char *argv[])
             // Crear un archivo para guardar los resultados de la simulación
             std::stringstream ss;
             ss << "data/density_" << std::setw(3) << std::setfill('0') << t << ".dat"; // Nombre del archivo basado en el tiempo de simulación
-            Air.PrintData(ss.str(), t);                                                    // Llamada a la función que guarda los datos
+            Air.PrintData(ss.str(), t);                                                // Llamada a la función que guarda los datos
 
             // Generar un frame de la simulación usando Gnuplot
             Air.PrintFrame(t);
