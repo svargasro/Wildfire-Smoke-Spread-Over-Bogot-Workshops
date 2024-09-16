@@ -19,5 +19,5 @@ gif:
 .PHONY: clean
 
 clean:
-	rm *.x  *.gp 
+	rm *.x  *.gp
 	rm -r frames data

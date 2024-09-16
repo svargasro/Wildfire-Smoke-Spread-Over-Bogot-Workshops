@@ -38,7 +38,7 @@ private:
 public:
     LatticeBoltzman(void);
     ~LatticeBoltzman(void);
-    int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i; };
+    int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i;};
     double rho(int ix, int iy, bool UseNew);
     double Jx(int ix, int iy, bool UseNew);
     double Jy(int ix, int iy, bool UseNew);
@@ -46,7 +46,7 @@ public:
     //double fsource(double rho0, double Ux0, double Uy0, int i, int ind);
     //double dif_fsource(double rho0, double Ux0, double Uy0, int i, int ind, double delta_t);
     void Collision(double delta_t);
-    void ImposeFields(void);
+    void ImposeFields(int t);
     void Advection(void);
     void Start(double rho0, double Ux0, double Uy0, double mu_x,
                double mu_y, double sigma_x, double sigma_y);
@@ -85,7 +85,6 @@ double LatticeBoltzman::rho(int ix, int iy, bool UseNew){
     double sum = 0;
     for (int i = 0; i < Q; i++){
         int n0 = n(ix, iy, i);
-
         if (UseNew) sum += fnew[n0];
         else sum += f[n0];
     }  
@@ -152,7 +151,7 @@ void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
 
             double gauss_x = exp(-0.5 * pow((ix - mu_x) / sigma_x, 2)) / (sigma_x * sqrt(2 * M_PI));
             double gauss_y = exp(-0.5 * pow((iy - mu_y) / sigma_y, 2)) / (sigma_y * sqrt(2 * M_PI));
-            double rho = rho0 * gauss_x * gauss_y;
+            double rho = rho0; //* gauss_x * gauss_y;
 
             for (i = 0; i < Q; i++){
                 n0 = n(ix, iy, i);
@@ -182,24 +181,46 @@ void LatticeBoltzman::Collision(double delta_t){
     }
 }
 
-void LatticeBoltzman::ImposeFields(){
+void LatticeBoltzman::ImposeFields(int t){
     // Implementación para imponer un campo de velocidad constante
     double rho0, Ux0, Uy0;
+    int n0;
+    double rho_incendio;
     for (int ix = 0; ix < Lx; ix++){
         for (int iy = 0; iy < Ly; iy++){
             rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
             Ux0 = 0.3;                // Velocidad en x
             Uy0 = 0.3;                // Velocidad en y
             for (int i = 0; i < Q; i++){
-                int n0 = n(ix, iy, i);
+                n0 = n(ix, iy, i);
                 fnew[n0] = feq(rho0, Ux0, Uy0, i);
+            }
+            if(t<=9){
+                if(ix==0 && iy==4){ //Usme(0,4)
+                    for (int i = 0; i < Q; i++){
+                        //std::cout<<"Incendio en: "<<ix<<", "<<iy<<std::endl;
+                        rho_incendio = 1;
+                        n0 = n(ix, iy, i);
+                        fnew[n0] = feq(rho_incendio, 0, 0, i);
+                    }
                 }
+                if(ix==6 && iy==7){ //Quebrada la vieja(6,7)
+                    for (int i = 0; i < Q; i++){
+                        //std::cout<<"Incendio en: "<<ix<<", "<<iy<<std::endl;
+                        rho_incendio = 1;
+                        n0 = n(ix, iy, i);
+                        fnew[n0] = feq(rho_incendio, 0, 0, i);
+                    }
+                }
+            }
+            
+                /*
             if(ix == 0 || ix == Lx-1 || iy == 0 || iy == Ly-1){
                 for (int i = 0; i < Q; i++){
                     int n0 = n(ix, iy, i);
                     fnew[n0] = feq(1e7, 0, 0, i);
                 }
-            }
+            }*/
         }   
     }
 }
@@ -262,9 +283,9 @@ void LatticeBoltzman::Printframe(double t){
 
 int main(int argc, char* argv[]){
     // Parámetros de la simulación
-    int tframe = 1, tmax = 10, delta_t = 1, ret;
-    double rho0 = 1, Ux0 = 0.3, Uy0 = 0.3;                               // Densidad inicial y velocidad
-    double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx/2, sigma_y = Ly/2; // Parámetros de la distribución gaussiana
+    int tframe = 1, tmax = 20, delta_t = 1, ret;
+    double rho0 = 0.001, Ux0 = 0.3, Uy0 = 0.3;                               // Densidad inicial y velocidad
+    double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx/4, sigma_y = Ly/4; // Parámetros de la distribución gaussiana
     LatticeBoltzman Air;
 
     // Parámetros a ajustar
@@ -284,7 +305,7 @@ int main(int argc, char* argv[]){
     {
         
         Air.Collision(delta_t);
-        Air.ImposeFields(); // Ux0, Uy0);
+        Air.ImposeFields(t); // Ux0, Uy0);
         Air.Advection();
         if (t % tframe == 0){
 
