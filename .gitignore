@@ -17,8 +17,9 @@ _build
 *.x
 ##Carpetas
 *.xlsx
-*/Codigo/Analisis de Datos/Datos/wrf2024-01-22
-Proyecto Final
-Talleres
+
 ##Codigo con fuentes
-Proyecto Final/Codigo/Lattice_Boltzmann/LB_AdvectionDiffusion_D2Q9_source.cpp
+*Parciales
+Proyecto Final/Codigo/Analisis de Datos/Datos/wrf2024-01-22
+Proyecto Final/Codigo/Analisis de Datos/HDF5
+Proyecto Final/Codigo/Analisis de Datos/netCDF4
