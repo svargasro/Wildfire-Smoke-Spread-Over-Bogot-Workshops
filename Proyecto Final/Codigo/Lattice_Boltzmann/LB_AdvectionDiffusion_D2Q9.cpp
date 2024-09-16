@@ -7,8 +7,8 @@
 
 //-------------------------------CONSTANTES GLOBALES------------------------
 // Dimensiones de la cuadrícula
-const int Lx = 10; // 100
-const int Ly = 14; // 140
+const int Lx = 500; // 100
+const int Ly = Lx*(1.4); // 140
 
 int t_hour = 240;
 double *Ux = new double[Lx * Ly * t_hour];
@@ -51,7 +51,7 @@ public:
     double Jy(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en y
     double feq(double rho0, double Ux0, double Uy0, int i);                                                    // Función de equilibrio
     double fsource(double rho0, double Ux0, double Uy0, int i, int ind);                                       // Término de fuente
-    void Collision(double delta_t);                                                                            // Fase de colisión
+    void Collision();                                                                            // Fase de colisión
     void ImposeFields(double Ux0, double Uy0, int t_hour);                                                     // Imponer campos de velocidad
     void Advection(void);                                                                                      // Fase de advección
     void Start(double rho0, double Ux0, double Uy0, double mu_x, double mu_y, double sigma_x, double sigma_y); // Inicialización
@@ -193,7 +193,7 @@ void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
 }
 
 // Fase de colisión: actualiza las funciones de distribución
-void LatticeBoltzman::Collision(double delta_t)
+void LatticeBoltzman::Collision()
 {
     int ix, iy, i, n0;
     double rho0, Ux0, Uy0;
@@ -205,7 +205,7 @@ void LatticeBoltzman::Collision(double delta_t)
             rho0 = rho(ix, iy, 0);      // Calcula la densidad actual
             Ux0 = Jx(ix, iy, 0) / rho0; // Flujo en x
             Uy0 = Jy(ix, iy, 0) / rho0; // Flujo en y
-            int ind = (ix * Ly + iy);   // Linealización de la cuadrícula
+    
             for (i = 0; i < Q; i++)
             {
                 n0 = n(ix, iy, i);
@@ -354,10 +354,10 @@ int main(int argc, char *argv[])
 
     // Parámetros generales de la simulación
     int t, tframe = 1000, tmax = t_hour * 100, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
-    double rho0 = 10000.0, Ux0 = 0.0, Uy0 = 0.0;                // Densidad inicial y velocidades iniciales en x e y
+    double rho0 = 0.1, Ux0 = 10, Uy0 = 10;                // Densidad inicial y velocidades iniciales en x e y
 
     // Parámetros para la distribución gaussiana que inicializa la densidad
-    double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx / 2, sigma_y = Ly / 2; // Parámetros de la gaussiana: centro (mu_x, mu_y), sigma: ancho
+    double mu_x = Lx / 2, mu_y = Ly / 2, sigma_x = Lx / 32, sigma_y = Ly / 32; // Parámetros de la gaussiana: centro (mu_x, mu_y), sigma: ancho
 
     // Crear una instancia de la clase LatticeBoltzman
     LatticeBoltzman Air;
@@ -381,8 +381,7 @@ int main(int argc, char *argv[])
     for (t = 0; t <= tmax; t++)
     {
         // Etapas de la simulación: colisión, imposición de campos y advección
-        Air.Collision(delta_t);
-        if (t < t_hour)
+        Air.Collision();
         Air.ImposeFields(Ux0, Uy0, t);
         Air.Advection();
 
