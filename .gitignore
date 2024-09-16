@@ -15,10 +15,12 @@ _build
 #*.pdf
 *.o
 *.x
-##Carpetas
 *.xlsx
 
-##Codigo con fuentes
+##Carpetas
+Parciales
+Talleres
 
-/Talleres
-/Parciales
+
+
+
