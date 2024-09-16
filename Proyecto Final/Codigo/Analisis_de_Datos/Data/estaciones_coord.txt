@@ -1,0 +1,17 @@
+Estación,VelViento,DirViento,PM10,Pm2.5,x_cell,y_cell
+Guaymaral,True,True,True,True,79,22
+Suba,True,True,True,True,51,23
+Colina,True,True,True,True,30,24
+Usaquén,True,True,True,True,41,29
+Las Ferias,True,True,True,True,61,33
+Fontibón,True,True,True,True,33,38
+Centro de Alto Rendimiento,True,True,True,True,89,38
+Móvil Séptima,True,True,True,True,59,40
+Kennedy,True,True,True,True,93,44
+Puente Aranda,True,True,True,True,79,48
+Ministerio de Ambiente,True,True,True,True,44,54
+Carvajal-Sevillana,True,True,True,True,80,58
+Jazmín,True,True,True,True,111,64
+Ciudad Bolivar,True,True,True,True,88,72
+Tunal,True,True,True,True,73,79
+San Cristobal,True,True,True,True,102,86
