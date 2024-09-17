@@ -12,6 +12,7 @@ const int Lx = 100; // 100
 const int Ly = Lx*(1.4); // 140
 
 
+
 int t_hour = 240;
 double *Ux = new double[Lx * Ly * t_hour];
 double *Uy = new double[Lx * Ly * t_hour]; // Velocidades en x y y
@@ -92,9 +93,9 @@ LatticeBoltzman::LatticeBoltzman(void)
 
     // Creación de los arreglos dinámicos para las funciones de distribución
     int ArraySize = Lx * Ly * Q;
-
     f = new double[ArraySize]();
     fnew = new double[ArraySize]();
+
 }
 
 // Destructor: libera la memoria dinámica
@@ -112,6 +113,7 @@ double LatticeBoltzman::rho(int ix, int iy, bool UseNew)
     for (int i = 0; i < Q; i++)
     {
         int n0 = n(ix, iy, i);
+
 
         if (UseNew)
             sum += fnew[n0];
@@ -158,6 +160,7 @@ double LatticeBoltzman::feq(double rho0, double Ux0, double Uy0, int i)
     double UdotVi = Ux0 * Vx[i] + Uy0 * Vy[i];
     double U2 = Ux0 * Ux0 + Uy0 * Uy0;
     double result = rho0 * w[i] * (1 + UdotVi / Cs2 + (UdotVi * UdotVi) / (2 * Cs2 * Cs2) - U2 / (2 * Cs2));
+
     return result;
 }
 
@@ -294,7 +297,7 @@ void LatticeBoltzman::PrintData(std::string NameFile, double t)
     std::ofstream MyFile(NameFile);
     double rho0, Ux0, Uy0;
 
-    // Recorre la cuadrícula en pasos de 4 para ahorrar espacio en los archivos de salida
+   // Recorre la cuadrícula en pasos de 4 para ahorrar espacio en los archivos de salida
     for (int ix = 0; ix < Lx; ix += 4)
     {
         for (int iy = 0; iy < Ly; iy += 4)
@@ -379,7 +382,6 @@ int main(int argc, char *argv[])
 
     // Inicializar la simulación con las condiciones iniciales (densidad y velocidades)
     Air.Start(rho0, Ux0, Uy0, mu_x, mu_y, sigma_x, sigma_y);
-
     // Bucle principal de la simulación
     for (t = 0; t <= tmax; t++)
     {
