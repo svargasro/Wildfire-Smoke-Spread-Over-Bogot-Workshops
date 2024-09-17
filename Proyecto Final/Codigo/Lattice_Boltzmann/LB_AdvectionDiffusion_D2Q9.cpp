@@ -212,11 +212,17 @@ void LatticeBoltzman::Advection(void){
     for (ix = 0; ix < Lx; ix++){ // for each cell
         for (iy = 0; iy < Ly; iy++){
             for (i = 0; i < Q; i++){ // on each direction
-                ixnext = (ix + Vx[i] + Lx) % Lx;
-                iynext = (iy + Vy[i] + Ly) % Ly;
-                n0 = n(ix, iy, i);
-                n0next = n(ixnext, iynext, i);
-                f[n0next] = fnew[n0]; // periodic boundaries
+                ixnext = ix + Vx[i];
+                iynext = iy + Vy[i];
+                //Free boundaries
+                if (ixnext >= 0 && ixnext < Lx && iynext >= 0 && iynext < Ly) {
+                    n0 = n(ix, iy, i);                
+                    n0next = n(ixnext, iynext, i);
+                    f[n0next] = fnew[n0]; 
+                }
+                else{
+                    continue;
+                }
             }
         }    
     }    
