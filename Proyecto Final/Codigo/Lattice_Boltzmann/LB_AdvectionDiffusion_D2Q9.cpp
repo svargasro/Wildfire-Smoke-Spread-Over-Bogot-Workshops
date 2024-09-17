@@ -8,11 +8,8 @@
 //-------------------------------CONSTANTES GLOBALES------------------------
 // Dimensiones de la cuadrícula
 // const int Lx = 500; // 100
-// const int Lx = 100; // 100
-// const int Ly = Lx*(1.4); // 140
-
-const int Lx = 256;
-const int Ly = 256; // 140
+const int Lx = 100; // 100
+const int Ly = Lx*(1.4); // 140
 
 
 int t_hour = 240;
@@ -236,8 +233,14 @@ void LatticeBoltzman::ImposeFields(double Ux0, double Uy0, int t)
                 //     Uy0 = Uy[ix * Ly + iy];
                 // }
                 fnew[n0] = feq(rho0, Ux0, Uy0, i);
+                }
+            if(ix == 0 || ix == Lx-1 || iy == 0 || iy == Ly-1){
+                for (int i = 0; i < Q; i++){
+                    int n0 = n(ix, iy, i);
+                    fnew[n0] = feq(1e7, 0, 0, i);
+                }
             }
-        }
+        }   
     }
 }
 
@@ -309,7 +312,7 @@ void LatticeBoltzman::PrintData(std::string NameFile, double t)
             Uy0 = Jy(ix, iy, false) / rho0; // Velocidad en y
 
             // Escribe los datos en el archivo de salida
-            MyFile << ix << " " << iy << " " << rho0 << " " << Ux0 << " " << Uy0 << std::endl;
+            MyFile << ix << " " << iy << " "std::endl; //<< rho0 << " " << Ux0 << " " << Uy0 << std::endl;
         }
         MyFile << std::endl; // Inserta un salto de línea después de cada fila de la cuadrícula
     }
