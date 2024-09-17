@@ -1,6 +1,7 @@
 GCC = g++
 CFLAGS = -O3 --std=c++17
 #S_glob = 0.001
+# D = 0.016
 D = 0.016
 
 TARGET = LB_AdvectionDiffusion_D2Q9

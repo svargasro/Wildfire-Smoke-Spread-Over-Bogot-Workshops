@@ -1,17 +1,17 @@
 Estación,VelViento,DirViento,PM10,Pm2.5,x_cell,y_cell
-Guaymaral,True,True,True,True,397,112
-Suba,True,True,True,True,258,118
-Colina,True,True,True,True,154,120
-Usaquén,True,True,True,True,207,148
-Las Ferias,True,True,True,True,307,167
-Fontibón,True,True,True,True,168,192
-Centro de Alto Rendimiento,True,True,True,True,447,192
-Móvil Séptima,True,True,True,True,298,202
-Kennedy,True,True,True,True,465,221
-Puente Aranda,True,True,True,True,396,243
-Ministerio de Ambiente,True,True,True,True,220,273
-Carvajal-Sevillana,True,True,True,True,401,291
-Jazmín,True,True,True,True,556,321
-Ciudad Bolivar,True,True,True,True,440,362
-Tunal,True,True,True,True,368,398
-San Cristobal,True,True,True,True,513,432
+Guaymaral,True,True,True,True,170,94
+Suba,True,True,True,True,110,99
+Colina,True,True,True,True,66,100
+Usaquén,True,True,True,True,89,124
+Las Ferias,True,True,True,True,131,140
+Fontibón,True,True,True,True,72,161
+Centro de Alto Rendimiento,True,True,True,True,191,161
+Móvil Séptima,True,True,True,True,127,169
+Kennedy,True,True,True,True,199,185
+Puente Aranda,True,True,True,True,169,204
+Ministerio de Ambiente,True,True,True,True,94,229
+Carvajal-Sevillana,True,True,True,True,172,245
+Jazmín,True,True,True,True,238,270
+Ciudad Bolivar,True,True,True,True,188,304
+Tunal,True,True,True,True,158,334
+San Cristobal,True,True,True,True,220,363
