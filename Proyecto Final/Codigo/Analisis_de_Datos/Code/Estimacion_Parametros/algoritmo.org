@@ -1,0 +1,40 @@
+#+title: Algoritmo
+#+AUTHOR: Simulation
+
+
+* Idea del algoritmo.
+** Ideas iniciales.
+Tenemos el Lattice-Boltzmann.
+
+Las manches azules, corresponden a las estaciones y las rojas a las casillas fuente. (15x15)
+[[./ejemploAjusteRho.jpg]] Créditos a Andrés :P
+
+Tenemos:
+- Densidad en las estaciones.
+- Densidad simulada.
+
+Se inicializan, por ahora, pero estos son dos arreglos que entran al programa de Python.
+#+BEGIN_SRC python
+density_grid_simulated = LB_density_with_sources(Lx, Ly, sources_1D, rho_sources, sigma)
+density_grid_obs = LB_density_with_sources(Lx, Ly, sources_1D, rho_sources_random, sigma)
+#+END_SRC
+
+** Ajuste.
+$\rho_S(ImposeFire)$ La densidad simulada depende de lo que ponga en ImposeFire.
+
+ [[/home/sergio/Imágenes/Capturas de pantalla/ordenColision.png]]
+
+*** Queremos:
+Optimizar los valores de $\rho$ =para las celdas fuente de incendio=.
+Los $\rho$ en las celdas fuente del incendio son los parámetro que puedo variar mediante ImposeFire.
+
+*** ¿Y bajo qué criterio los ajusto?
+Se buscan $\rho$ en las celdas fuente de incendio tal que se minimice el error cuadrático.
+El superíndice es el número de estación.
+
+$Error_C = (\rho_{S}^1-\rho_{O}^1)^2  + (\rho_{S}^2-\rho_{O}^2)^2 + (\rho_{S}^3-rho_{O}^3)^2 + ... + (\rho_{S}^n-\rho_{O}^n)^2$
+
+*** ¿Qué obtengo?
+
+$\rho_{Fuente}$ para las fuentes del incendio en un tiempo t.
+Iterando, puedo graficar $\rho_{Fuente} vs t$
