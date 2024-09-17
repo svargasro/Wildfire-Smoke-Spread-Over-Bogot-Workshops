@@ -42,22 +42,6 @@ private:
     double *f, *fnew; // Funciones de distribución para los diferentes estados (previo, actual y nuevo)
 
 public:
-<<<<<<< HEAD
-    LatticeBoltzman(void);                                                                                     // Constructor
-    ~LatticeBoltzman(void);                                                                                    // Destructor
-    int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i; };                                           // Conversión de índices 2D a 1D
-    double rho(int ix, int iy, bool UseNew);                                                                   // Cálculo de la densidad
-    double Jx(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en x
-    double Jy(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en y
-    double feq(double rho0, double Ux0, double Uy0, int i);                                                    // Función de equilibrio
-    double fsource(double rho0, double Ux0, double Uy0, int i, int ind);                                       // Término de fuente
-    void Collision();                                                                                          // Fase de colisión
-    void ImposeFields(double Ux0, double Uy0, int t_hour);                                                     // Imponer campos de velocidad
-    void Advection(void);                                                                                      // Fase de advección
-    void Start(double rho0, double Ux0, double Uy0, double mu_x, double mu_y, double sigma_x, double sigma_y); // Inicialización
-    void PrintData(std::string NameFile, double t);                                                            // Imprimir resultados a archivo
-    void PrintFrame(double t);                                                                                 // Generar y guardar el frame de la simulación
-=======
     LatticeBoltzman(void);
     ~LatticeBoltzman(void);
     int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i;};
@@ -65,8 +49,6 @@ public:
     double Jx(int ix, int iy, bool UseNew);
     double Jy(int ix, int iy, bool UseNew);
     double feq(double rho0, double Ux0, double Uy0, int i);
-    //double fsource(double rho0, double Ux0, double Uy0, int i, int ind);
-    //double dif_fsource(double rho0, double Ux0, double Uy0, int i, int ind, double delta_t);
     void Collision(double delta_t);
     void ImposeFields(int t);
     void ImposeFire(int rho, int ix, int iy);
@@ -75,7 +57,6 @@ public:
                double mu_y, double sigma_x, double sigma_y);
     void Print(std::string NameFile, double t);
     void Printframe(double t);
->>>>>>> 68b5f10 (Added ImposeFire function)
 };
 
 //-------------------------------IMPLEMENTACIÓN DE LA CLASE LatticeBoltzman------------------------
@@ -250,11 +231,6 @@ void LatticeBoltzman::ImposeFields(int t){
     }
 }
 
-<<<<<<< HEAD
-// Fase de advección: actualiza las funciones de distribución con condiciones periódicas
-void LatticeBoltzman::Advection(void)
-{
-=======
 void LatticeBoltzman::ImposeFire(int rho, int ix, int iy){
     for (int i = 0; i < Q; i++){
         int n0 = n(ix, iy, i);
@@ -262,21 +238,22 @@ void LatticeBoltzman::ImposeFire(int rho, int ix, int iy){
     }
 }
 void LatticeBoltzman::Advection(void){
->>>>>>> 68b5f10 (Added ImposeFire function)
     int ix, iy, i, ixnext, iynext, n0, n0next;
 
-    for (ix = 0; ix < Lx; ix++) // Itera sobre la cuadrícula
-    {
-        for (iy = 0; iy < Ly; iy++)
-        {
-            for (i = 0; i < Q; i++) // Sobre cada dirección de velocidad
-            {
-                ixnext = (ix + Vx[i] + Lx) % Lx; // Condiciones periódicas en x
-                iynext = (iy + Vy[i] + Ly) % Ly; // Condiciones periódicas en y
-                n0 = n(ix, iy, i);               // Índice actual
-                n0next = n(ixnext, iynext, i);   // Índice siguiente
-
-                f[n0next] = fnew[n0]; // Actualiza el estado actual
+    for (ix = 0; ix < Lx; ix++){ // for each cell
+        for (iy = 0; iy < Ly; iy++){
+            for (i = 0; i < Q; i++){ // on each direction
+                ixnext = ix + Vx[i];
+                iynext = iy + Vy[i];
+                //Free boundaries
+                if (ixnext >= 0 && ixnext < Lx && iynext >= 0 && iynext < Ly) {
+                    n0 = n(ix, iy, i);                
+                    n0next = n(ixnext, iynext, i);
+                    f[n0next] = fnew[n0]; 
+                }
+                else{
+                    continue;
+                }
             }
         }
     }
