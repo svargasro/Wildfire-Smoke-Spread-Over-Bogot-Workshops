@@ -176,9 +176,7 @@ void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
             // Calcular el valor de la función gaussiana en las direcciones x e y
             double gauss_x = exp(-0.5 * pow((ix - mu_x) / sigma_x, 2)) / (sigma_x * sqrt(2 * M_PI));
             double gauss_y = exp(-0.5 * pow((iy - mu_y) / sigma_y, 2)) / (sigma_y * sqrt(2 * M_PI));
-
-            // Calcular la densidad inicial usando la distribución gaussiana
-            double rho = rho0 * gauss_x * gauss_y;
+            double rho = rho0; //* gauss_x * gauss_y;
 
             // Inicializar las funciones de distribución en todas las direcciones de velocidad
             for (i = 0; i < Q; i++) // Para cada dirección de la función de distribución
@@ -214,32 +212,46 @@ void LatticeBoltzman::Collision()
     }
 }
 
-// Imponer campos de velocidad
-void LatticeBoltzman::ImposeFields(double Ux0, double Uy0, int t)
-{
+void LatticeBoltzman::ImposeFields(int t){
     // Implementación para imponer un campo de velocidad constante
-    double rho0;
-    for (int ix = 0; ix < Lx; ix++)
-    {
-        for (int iy = 0; iy < Ly; iy++)
-        {
+    double rho0, Ux0, Uy0;
+    int n0;
+    double rho_incendio;
+    for (int ix = 0; ix < Lx; ix++){
+        for (int iy = 0; iy < Ly; iy++){
             rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
-            for (int i = 0; i < Q; i++)
-            {
-                int n0 = n(ix, iy, i);
-                // if (t % t_hour == 0)
-                // {
-                //     Ux0 = Ux[ix * Ly + iy] ;
-                //     Uy0 = Uy[ix * Ly + iy];
-                // }
+            Ux0 = 0.3;                // Velocidad en x
+            Uy0 = 0.3;                // Velocidad en y
+            for (int i = 0; i < Q; i++){
+                n0 = n(ix, iy, i);
                 fnew[n0] = feq(rho0, Ux0, Uy0, i);
+            }
+            if(t<=9){
+                if(ix==0 && iy==4){ //Usme(0,4)
+                    for (int i = 0; i < Q; i++){
+                        //std::cout<<"Incendio en: "<<ix<<", "<<iy<<std::endl;
+                        rho_incendio = 1;
+                        n0 = n(ix, iy, i);
+                        fnew[n0] = feq(rho_incendio, 0, 0, i);
+                    }
                 }
+                if(ix==6 && iy==7){ //Quebrada la vieja(6,7)
+                    for (int i = 0; i < Q; i++){
+                        //std::cout<<"Incendio en: "<<ix<<", "<<iy<<std::endl;
+                        rho_incendio = 1;
+                        n0 = n(ix, iy, i);
+                        fnew[n0] = feq(rho_incendio, 0, 0, i);
+                    }
+                }
+            }
+            
+                /*
             if(ix == 0 || ix == Lx-1 || iy == 0 || iy == Ly-1){
                 for (int i = 0; i < Q; i++){
                     int n0 = n(ix, iy, i);
                     fnew[n0] = feq(1e7, 0, 0, i);
                 }
-            }
+            }*/
         }   
     }
 }
