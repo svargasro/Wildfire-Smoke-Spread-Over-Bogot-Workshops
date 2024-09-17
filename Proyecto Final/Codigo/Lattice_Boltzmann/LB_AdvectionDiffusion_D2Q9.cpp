@@ -42,6 +42,7 @@ private:
     double *f, *fnew; // Funciones de distribución para los diferentes estados (previo, actual y nuevo)
 
 public:
+<<<<<<< HEAD
     LatticeBoltzman(void);                                                                                     // Constructor
     ~LatticeBoltzman(void);                                                                                    // Destructor
     int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i; };                                           // Conversión de índices 2D a 1D
@@ -56,6 +57,25 @@ public:
     void Start(double rho0, double Ux0, double Uy0, double mu_x, double mu_y, double sigma_x, double sigma_y); // Inicialización
     void PrintData(std::string NameFile, double t);                                                            // Imprimir resultados a archivo
     void PrintFrame(double t);                                                                                 // Generar y guardar el frame de la simulación
+=======
+    LatticeBoltzman(void);
+    ~LatticeBoltzman(void);
+    int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i;};
+    double rho(int ix, int iy, bool UseNew);
+    double Jx(int ix, int iy, bool UseNew);
+    double Jy(int ix, int iy, bool UseNew);
+    double feq(double rho0, double Ux0, double Uy0, int i);
+    //double fsource(double rho0, double Ux0, double Uy0, int i, int ind);
+    //double dif_fsource(double rho0, double Ux0, double Uy0, int i, int ind, double delta_t);
+    void Collision(double delta_t);
+    void ImposeFields(int t);
+    void ImposeFire(int rho, int ix, int iy);
+    void Advection(void);
+    void Start(double rho0, double Ux0, double Uy0, double mu_x,
+               double mu_y, double sigma_x, double sigma_y);
+    void Print(std::string NameFile, double t);
+    void Printframe(double t);
+>>>>>>> 68b5f10 (Added ImposeFire function)
 };
 
 //-------------------------------IMPLEMENTACIÓN DE LA CLASE LatticeBoltzman------------------------
@@ -226,39 +246,23 @@ void LatticeBoltzman::ImposeFields(int t){
                 n0 = n(ix, iy, i);
                 fnew[n0] = feq(rho0, Ux0, Uy0, i);
             }
-            if(t<=9){
-                if(ix==0 && iy==4){ //Usme(0,4)
-                    for (int i = 0; i < Q; i++){
-                        //std::cout<<"Incendio en: "<<ix<<", "<<iy<<std::endl;
-                        rho_incendio = 1;
-                        n0 = n(ix, iy, i);
-                        fnew[n0] = feq(rho_incendio, 0, 0, i);
-                    }
-                }
-                if(ix==6 && iy==7){ //Quebrada la vieja(6,7)
-                    for (int i = 0; i < Q; i++){
-                        //std::cout<<"Incendio en: "<<ix<<", "<<iy<<std::endl;
-                        rho_incendio = 1;
-                        n0 = n(ix, iy, i);
-                        fnew[n0] = feq(rho_incendio, 0, 0, i);
-                    }
-                }
-            }
-            
-                /*
-            if(ix == 0 || ix == Lx-1 || iy == 0 || iy == Ly-1){
-                for (int i = 0; i < Q; i++){
-                    int n0 = n(ix, iy, i);
-                    fnew[n0] = feq(1e7, 0, 0, i);
-                }
-            }*/
         }   
     }
 }
 
+<<<<<<< HEAD
 // Fase de advección: actualiza las funciones de distribución con condiciones periódicas
 void LatticeBoltzman::Advection(void)
 {
+=======
+void LatticeBoltzman::ImposeFire(int rho, int ix, int iy){
+    for (int i = 0; i < Q; i++){
+        int n0 = n(ix, iy, i);
+        fnew[n0] = feq(rho, 0, 0, i);
+    }
+}
+void LatticeBoltzman::Advection(void){
+>>>>>>> 68b5f10 (Added ImposeFire function)
     int ix, iy, i, ixnext, iynext, n0, n0next;
 
     for (ix = 0; ix < Lx; ix++) // Itera sobre la cuadrícula
@@ -402,9 +406,13 @@ int main(int argc, char *argv[])
     // Bucle principal de la simulación
     for (t = 0; t <= tmax; t++)
     {
-        // Etapas de la simulación: colisión, imposición de campos y advección
-        Air.Collision();
-        Air.ImposeFields(Ux0, Uy0, t);
+        
+        Air.Collision(delta_t);
+        Air.ImposeFields(t); // Ux0, Uy0);
+        if(t <=9){
+            Air.ImposeFire(1, 0, 4);//Usme(0,4)
+            Air.ImposeFire(1, 6, 7);//Quebrada la vieja(6,7)
+        }
         Air.Advection();
 
         // Guardar resultados cada tframe pasos
