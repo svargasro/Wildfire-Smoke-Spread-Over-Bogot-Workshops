@@ -25,8 +25,8 @@ $\rho_S(ImposeFire)$ La densidad simulada depende de lo que ponga en ImposeFire.
  [[/home/sergio/Imágenes/Capturas de pantalla/ordenColision.png]]
 
 *** Queremos:
-Optimizar los valores de $\rho$ =para las celdas fuente de incendio=.
-Los $\rho$ en las celdas fuente del incendio son los parámetro que puedo variar mediante ImposeFire.
+Optimizar los valores de $\rho_F$ =para las celdas fuente de incendio=.
+Los $\rho_F$, $\rho$ en las celdas fuente del incendio, son los parámetro que puedo variar mediante ImposeFire.
 
 *** ¿Y bajo qué criterio los ajusto?
 Se buscan $\rho$ en las celdas fuente de incendio tal que se minimice el error cuadrático.
@@ -36,5 +36,5 @@ $Error_C = (\rho_{S}^1-\rho_{O}^1)^2  + (\rho_{S}^2-\rho_{O}^2)^2 + (\rho_{S}^3-
 
 *** ¿Qué obtengo?
 
-$\rho_{Fuente}$ para las fuentes del incendio en un tiempo t.
-Iterando, puedo graficar $\rho_{Fuente} vs t$
+$\rho_{F}$ para las fuentes del incendio en un tiempo t.
+Iterando, puedo graficar $\rho_{F}$ vs $t$
