@@ -10,7 +10,7 @@
 // const int Lx = 500; // 100
 const int Lx = 100; // 100
 const int Ly = Lx*(1.4); // 140
-
+int iter_per_hour = 9604;
 
 
 int t_hour = 240;
@@ -37,26 +37,26 @@ double UmUtau;    // 1 - 1/tau
 // Clase para el método de Lattice Boltzmann
 class LatticeBoltzman
 {
-private:
-    double w[Q];      // Pesos de las direcciones
-    int Vx[Q], Vy[Q]; // Vectores de velocidad en las direcciones x e y
-    double *f, *fnew; // Funciones de distribución para los diferentes estados (previo, actual y nuevo)
+    private:
+        double w[Q];      // Pesos de las direcciones
+        int Vx[Q], Vy[Q]; // Vectores de velocidad en las direcciones x e y
+        double *f, *fnew; // Funciones de distribución para los diferentes estados (previo, actual y nuevo)
 
-public:
-    LatticeBoltzman(void);                                                                                     // Constructor
-    ~LatticeBoltzman(void);                                                                                    // Destructor
-    int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i; };                                           // Conversión de índices 2D a 1D
-    double rho(int ix, int iy, bool UseNew);                                                                   // Cálculo de la densidad
-    double Jx(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en x
-    double Jy(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en y
-    double feq(double rho0, double Ux0, double Uy0, int i);                                                    // Función de equilibrio
-    double fsource(double rho0, double Ux0, double Uy0, int i, int ind);                                       // Término de fuente
-    void Collision();                                                                                          // Fase de colisión
-    void ImposeFields(int t_hour);                                                     // Imponer campos de velocidad
-    void Advection(void);                                                                                      // Fase de advección
-    void Start(double rho0, double Ux0, double Uy0, double mu_x, double mu_y, double sigma_x, double sigma_y); // Inicialización
-    void PrintData(std::string NameFile, double t);                                                            // Imprimir resultados a archivo
-    void PrintFrame(double t);                                                                                 // Generar y guardar el frame de la simulación
+    public:
+        LatticeBoltzman(void);                                                                                     // Constructor
+        ~LatticeBoltzman(void);                                                                                    // Destructor
+        int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i; };                                           // Conversión de índices 2D a 1D
+        double rho(int ix, int iy, bool UseNew);                                                                   // Cálculo de la densidad
+        double Jx(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en x
+        double Jy(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en y
+        double feq(double rho0, double Ux0, double Uy0, int i);                                                    // Función de equilibrio
+        double fsource(double rho0, double Ux0, double Uy0, int i, int ind);                                       // Término de fuente
+        void Collision();                                                                                          // Fase de colisión
+        void ImposeFields(int t_hour);                                                     // Imponer campos de velocidad
+        void Advection(void);                                                                                      // Fase de advección
+        void Start(double rho0, double Ux0, double Uy0, double mu_x, double mu_y, double sigma_x, double sigma_y); // Inicialización
+        void PrintData(std::string NameFile, double t);                                                            // Imprimir resultados a archivo
+        void PrintFrame(double t);                                                                                 // Generar y guardar el frame de la simulación
 };
 
 //-------------------------------FUNCIONES GLOBALES------------------------
@@ -164,7 +164,7 @@ double LatticeBoltzman::feq(double rho0, double Ux0, double Uy0, int i)
 {
     double UdotVi = Ux0 * Vx[i] + Uy0 * Vy[i];
     double U2 = Ux0 * Ux0 + Uy0 * Uy0;
-    double result = rho0 * w[i] * (1 + UdotVi / Cs2 + (UdotVi * UdotVi) / (2 * Cs2 * Cs2) - U2 / (2 * Cs2));
+    double result = rho0 * w[i] * (1 + UdotVi / Cs2 + (UdotVi * UdotVi) / (2.0 * Cs2 * Cs2) - U2 / (2.0 * Cs2));
 
     return result;
 }
@@ -185,8 +185,7 @@ void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
             // Calcular el valor de la función gaussiana en las direcciones x e y
             double gauss_x = exp(-0.5 * pow((ix - mu_x) / sigma_x, 2)) / (sigma_x * sqrt(2 * M_PI));
             double gauss_y = exp(-0.5 * pow((iy - mu_y) / sigma_y, 2)) / (sigma_y * sqrt(2 * M_PI));
-            double rho = rho0; //* gauss_x * gauss_y;
-
+            double rho = rho0*gauss_x*gauss_y;
             // Inicializar las funciones de distribución en todas las direcciones de velocidad
             for (i = 0; i < Q; i++) // Para cada dirección de la función de distribución
             {
@@ -226,23 +225,20 @@ void LatticeBoltzman::ImposeFields(int t)
 {
     // Implementación para imponer un campo de velocidad constante
     double rho0;
-    // double Ux0 = Ux[0], Uy0 = Uy[0];
-    double Ux0 = 0 , Uy0 = 0;
+    int auxT=(t+1)/iter_per_hour;
+    double Ux0,Uy0;
     for (int ix = 0; ix < Lx; ix++)
     {
         for (int iy = 0; iy < Ly; iy++)
         {
+
+            int index = ix*Ly+iy +Lx*Ly*auxT;
+            Ux0 = Ux[index];
+            Uy0 = Uy[index];
             rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
             for (int i = 0; i < Q; i++)
             {
                 int n0 = n(ix, iy, i);
-
-                if (t % t_hour == 0)
-                {   
-                    Ux0 = Ux[ix * Ly + iy];
-                    Uy0 = Uy[ix * Ly + iy];
-                }
-
                 fnew[n0] = feq(rho0, Ux0, Uy0, i);
             }
         }   
@@ -439,7 +435,7 @@ int main(int argc, char *argv[])
 {
 
     // Parámetros generales de la simulación
-    int t, tframe = 100, tmax = t_hour * 100, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
+    int t, tframe = 200, tmax = t_hour *40, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
     // int t, tframe = 10, tmax = 1000, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
     // double rho0 = 100000000000, Ux0 = Lx / 100, Uy0 = Ly / 100;             // Densidad inicial y velocidades iniciales en x e y
     double rho0 = 10, Ux0 = 0.0, Uy0 = 0.0;
