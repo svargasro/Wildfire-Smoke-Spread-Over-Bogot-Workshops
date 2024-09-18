@@ -11,7 +11,7 @@ $(TARGET).x: $(TARGET).cpp
 	$(GCC) $(CFLAGS) -o $@ $<
 
 ejecutar: $(TARGET).x
-	./$< 0.01 0.016	
+	./$< 0.016	
 
 gif:
 	convert -delay 25 -loop 0 $(shell ls frames/*.png | sort -V) AdvectionDifusion.gif

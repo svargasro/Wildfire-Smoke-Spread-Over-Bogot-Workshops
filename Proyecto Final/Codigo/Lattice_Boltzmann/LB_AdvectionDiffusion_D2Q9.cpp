@@ -208,18 +208,18 @@ void LatticeBoltzman::ImposeFields(int t){
             Uy0 = 0.3;                // Velocidad en y
             for (int i = 0; i < Q; i++){
                 n0 = n(ix, iy, i);
-                fnew[n0] = feq(rho0, Ux0, Uy0, i);
+                if(ix*Ly+iy == 4){
+                    fnew[n0] = feq(1, Ux0, Uy0, i);
+                }
+                else{
+                    fnew[n0] = feq(rho0, Ux0, Uy0, i);
+                }
             }
         }   
     }
 }
 
-void LatticeBoltzman::ImposeFire(int rho, int ix, int iy){
-    for (int i = 0; i < Q; i++){
-        int n0 = n(ix, iy, i);
-        fnew[n0] = feq(rho, 0, 0, i);
-    }
-}
+
 void LatticeBoltzman::Advection(void){
     int ix, iy, i, ixnext, iynext, n0, n0next;
 
@@ -243,30 +243,12 @@ void LatticeBoltzman::Advection(void){
 }
 //----------------------Carga de resultados----------------------
 // Funcion para imprimir los resultados de la simulación en un archivo
-void LoadData(std::string NameFile)
-{
-    // Abre un archivo de entrada para cargar los datos de la simulación
-    std::ifstream MyFile(NameFile);
-    std::ofstream MyFile2("Debug.txt");
+void LoadData(std::string NameFile){
 
-    for (int ix = 0; ix < Lx; ix++)
-    {
-        for (int iy = 0; iy < Ly; iy++)
-        {
-            for (int t = 0; t < t_hour; t++)
-            {
-                int index = (iy * Lx + ix) * t_hour + t;
-                // int index = ix * Ly * t_hour + iy * t_hour + t;
-                MyFile >> Ux[index] >> Uy[index];
-                MyFile2 << index + 1 << " " << Ux[index] << " " << Uy[index] << std::endl;
-            }
-        }
-    }
-    std::cout << "Datos cargados exitosamente" << std::endl;
-    // Cierra el archivo de entrada
-    MyFile.close();
-    MyFile2.close();
+
 }
+
+
 // Funciones de impresión de resultados y visualización
 //---------------------Impresión de resultados---------------------
 // Funcion para imprimir los resultados de la simulación en un archivo
@@ -363,10 +345,6 @@ int main(int argc, char* argv[]){
         
         Air.Collision();
         Air.ImposeFields(t); // Ux0, Uy0);
-        if(t <=9){
-            Air.ImposeFire(1, 0, 4);//Usme(0,4)
-            Air.ImposeFire(1, 6, 7);//Quebrada la vieja(6,7)
-        }
         Air.Advection();
 
         // Guardar resultados cada tframe pasos
