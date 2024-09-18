@@ -121,7 +121,7 @@ if __name__=="__main__":
     sigma = 5.0
     sources_1D = [33, 141, 175,23]  # Índices de celdas con incendio.
     stations = [21, 70, 81, 122, 133, 3] #Ubicación de las estaciones.
-    initial_rho_sources = [1.0, 2.0, 1.5,78] #Valores iniciales de rho (Investigación Alejandra)
+    initial_rho_sources = [1.0, 2.0, 1.5, 3.4] #Valores iniciales de rho (Investigación Alejandra)
     rho_sources_random = np.random.uniform(0.5, 4.0, size=4) #Valores de rho reales (Random para probar varias veces)
 
     # Simular la densidad y obtener una grilla para plot (Densidades en el espacio)
