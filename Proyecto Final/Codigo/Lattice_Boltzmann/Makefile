@@ -17,7 +17,7 @@ ejecutar: $(TARGET).x
 	
 
 gif: ejecutar
-	convert -delay 25 -loop 0 $(shell ls frames/*.png | sort -V) AdvectionDifusion.gif
+		convert -delay 25 -loop 0 $(shell ls frames/*.png | sort -V) AdvectionDifusion_D=$(D).gif
 
 .PHONY: clean
 
