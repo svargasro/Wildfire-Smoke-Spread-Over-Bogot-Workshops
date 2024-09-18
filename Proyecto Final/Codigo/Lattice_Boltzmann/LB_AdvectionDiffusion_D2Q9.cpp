@@ -236,12 +236,9 @@ void LatticeBoltzman::ImposeFields(int t)
             for (int i = 0; i < Q; i++)
             {
                 int n0 = n(ix, iy, i);
-                exit(0);
+
                 if (t % t_hour == 0)
                 {   
-                    if(t == 0){
-                    exit(0);
-                    }
                     Ux0 = Ux[ix * Ly + iy];
                     Uy0 = Uy[ix * Ly + iy];
                 }
@@ -470,9 +467,9 @@ int main(int argc, char *argv[])
     // Inicializar la simulación con las condiciones iniciales (densidad y velocidades)
     Air.Start(rho0, Ux0, Uy0, mu_x, mu_y, sigma_x, sigma_y);
     // Bucle principal de la simulación
+
     for (t = 0; t <= tmax; t++)
     {
-        
         Air.Collision();
         Air.ImposeFields(t); // Ux0, Uy0);
         // if(t <=9){
@@ -482,8 +479,10 @@ int main(int argc, char *argv[])
         Air.Advection();
 
         // Guardar resultados cada tframe pasos
+
         if (t % tframe == 0)
         {
+
             // Verificar si el directorio "data" existe, de lo contrario, crearlo
             if (system("test -d data") != 0)
             {
