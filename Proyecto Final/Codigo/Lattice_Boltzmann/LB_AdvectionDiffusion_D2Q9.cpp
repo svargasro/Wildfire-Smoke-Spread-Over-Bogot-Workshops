@@ -43,22 +43,27 @@ private:
     double *f, *fnew; // Funciones de distribución para los diferentes estados (previo, actual y nuevo)
 
 public:
-    LatticeBoltzman(void);
-    ~LatticeBoltzman(void);
-    int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i;};
-    double rho(int ix, int iy, bool UseNew);
-    double Jx(int ix, int iy, bool UseNew);
-    double Jy(int ix, int iy, bool UseNew);
-    double feq(double rho0, double Ux0, double Uy0, int i);
-    void Collision(double delta_t);
-    void ImposeFields(int t);
-    void ImposeFire(int rho, int ix, int iy);
-    void Advection(void);
-    void Start(double rho0, double Ux0, double Uy0, double mu_x,
-               double mu_y, double sigma_x, double sigma_y);
-    void Print(std::string NameFile, double t);
-    void Printframe(double t);
+    LatticeBoltzman(void);                                                                                     // Constructor
+    ~LatticeBoltzman(void);                                                                                    // Destructor
+    int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i; };                                           // Conversión de índices 2D a 1D
+    double rho(int ix, int iy, bool UseNew);                                                                   // Cálculo de la densidad
+    double Jx(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en x
+    double Jy(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en y
+    double feq(double rho0, double Ux0, double Uy0, int i);                                                    // Función de equilibrio
+    double fsource(double rho0, double Ux0, double Uy0, int i, int ind);                                       // Término de fuente
+    void Collision();                                                                                          // Fase de colisión
+    void ImposeFields(int t_hour);                                                     // Imponer campos de velocidad
+    void Advection(void);                                                                                      // Fase de advección
+    void Start(double rho0, double Ux0, double Uy0, double mu_x, double mu_y, double sigma_x, double sigma_y); // Inicialización
+    void PrintData(std::string NameFile, double t);                                                            // Imprimir resultados a archivo
+    void PrintFrame(double t);                                                                                 // Generar y guardar el frame de la simulación
 };
+
+//-------------------------------FUNCIONES GLOBALES------------------------
+//Declaración de funciones
+void LoadData(std::string NameFile);                 // Cargar los datos de velocidad desde un archivo
+void LoadDataBinary(const std::string &filename, double *Ux, double *Uy, int size); // Cargar los datos desde un archivo binario
+void SaveDataBinary(const std::string &filename, double *Ux, double *Uy, int size); // Guardar los datos en un archivo binario
 
 //-------------------------------IMPLEMENTACIÓN DE LA CLASE LatticeBoltzman------------------------
 
@@ -216,30 +221,44 @@ void LatticeBoltzman::Collision()
     }
 }
 
-void LatticeBoltzman::ImposeFields(int t){
+// Imponer campos de velocidad
+void LatticeBoltzman::ImposeFields(int t)
+{
     // Implementación para imponer un campo de velocidad constante
-    double rho0, Ux0, Uy0;
-    int n0;
-    double rho_incendio;
-    for (int ix = 0; ix < Lx; ix++){
-        for (int iy = 0; iy < Ly; iy++){
+    double rho0;
+    // double Ux0 = Ux[0], Uy0 = Uy[0];
+    double Ux0 = 0 , Uy0 = 0;
+    for (int ix = 0; ix < Lx; ix++)
+    {
+        for (int iy = 0; iy < Ly; iy++)
+        {
             rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
-            Ux0 = 0.3;                // Velocidad en x
-            Uy0 = 0.3;                // Velocidad en y
-            for (int i = 0; i < Q; i++){
-                n0 = n(ix, iy, i);
+            for (int i = 0; i < Q; i++)
+            {
+                int n0 = n(ix, iy, i);
+                exit(0);
+                if (t % t_hour == 0)
+                {   
+                    if(t == 0){
+                    exit(0);
+                    }
+                    Ux0 = Ux[ix * Ly + iy];
+                    Uy0 = Uy[ix * Ly + iy];
+                }
+
                 fnew[n0] = feq(rho0, Ux0, Uy0, i);
             }
         }   
     }
 }
 
-void LatticeBoltzman::ImposeFire(int rho, int ix, int iy){
-    for (int i = 0; i < Q; i++){
-        int n0 = n(ix, iy, i);
-        fnew[n0] = feq(rho, 0, 0, i);
-    }
-}
+// void LatticeBoltzman::ImposeFire(int rho, int ix, int iy){
+//     for (int i = 0; i < Q; i++){
+//         int n0 = n(ix, iy, i);
+        
+//         fnew[n0] = feq(rho, 0, 0, i);
+//     }
+// }
 void LatticeBoltzman::Advection(void){
     int ix, iy, i, ixnext, iynext, n0, n0next;
 
@@ -262,32 +281,6 @@ void LatticeBoltzman::Advection(void){
     }
 }
 
-//----------------------Carga de resultados----------------------
-// Funcion para imprimir los resultados de la simulación en un archivo
-void LoadData(std::string NameFile)
-{
-    // Abre un archivo de entrada para cargar los datos de la simulación
-    std::ifstream MyFile(NameFile);
-    std::ofstream MyFile2("Debug.txt");
-
-    for (int ix = 0; ix < Lx; ix++)
-    {
-        for (int iy = 0; iy < Ly; iy++)
-        {
-            for (int t = 0; t < t_hour; t++)
-            {
-                int index = (iy * Lx + ix) * t_hour + t;
-                // int index = ix * Ly * t_hour + iy * t_hour + t;
-                MyFile >> Ux[index] >> Uy[index];
-                MyFile2 << index + 1 << " " << Ux[index] << " " << Uy[index] << std::endl;
-            }
-        }
-    }
-    std::cout << "Datos cargados exitosamente" << std::endl;
-    // Cierra el archivo de entrada
-    MyFile.close();
-    MyFile2.close();
-}
 // Funciones de impresión de resultados y visualización
 //---------------------Impresión de resultados---------------------
 // Funcion para imprimir los resultados de la simulación en un archivo
@@ -296,11 +289,12 @@ void LatticeBoltzman::PrintData(std::string NameFile, double t)
     // Abre un archivo de salida para guardar los datos de la simulación
     std::ofstream MyFile(NameFile);
     double rho0, Ux0, Uy0;
+    int step = 1;
 
-   // Recorre la cuadrícula en pasos de 4 para ahorrar espacio en los archivos de salida
-    for (int ix = 0; ix < Lx; ix += 4)
+    // Recorre la cuadrícula en pasos de 4 para ahorrar espacio en los archivos de salida
+    for (int ix = 0; ix < Lx; ix += step)
     {
-        for (int iy = 0; iy < Ly; iy += 4)
+        for (int iy = 0; iy < Ly; iy += step)
         {
             // Calcula la densidad (rho0) y las velocidades (Ux0, Uy0) para cada celda
             rho0 = rho(ix, iy, false);      // Densidad en la celda (ix, iy)
@@ -308,7 +302,7 @@ void LatticeBoltzman::PrintData(std::string NameFile, double t)
             Uy0 = Jy(ix, iy, false) / rho0; // Velocidad en y
 
             // Escribe los datos en el archivo de salida
-            MyFile << ix << " " << iy << " "std::endl; //<< rho0 << " " << Ux0 << " " << Uy0 << std::endl;
+            MyFile << ix << " " << iy << " "<< rho0 << " " << Ux0 << " " << Uy0 << std::endl;
         }
         MyFile << std::endl; // Inserta un salto de línea después de cada fila de la cuadrícula
     }
@@ -350,15 +344,108 @@ void LatticeBoltzman::PrintFrame(double t)
         std::cerr << "Error: No se pudo ejecutar el script de gnuplot" << std::endl;
 }
 
+//----------------------Carga de resultados----------------------
+// Función para cargar los datos necesarios para la simulación.
+// La función intenta cargar los datos desde un archivo binario previamente guardado para acelerar la carga.
+// Si el archivo binario no existe, carga los datos desde un archivo de texto y luego los guarda en formato binario para futuras ejecuciones.
+void LoadData(std::string NameFile)
+{
+    // Nombre del archivo binario para almacenar los datos
+    const std::string binaryFilename = "velocity.bin";
+
+    // Calcula el tamaño total de los datos a cargar (número de elementos)
+    int totalSize = Lx * Ly * t_hour;
+
+    // Verifica si el archivo binario ya existe
+    std::ifstream binFile(binaryFilename, std::ios::binary);
+    if (binFile.good())
+    {
+        // Si el archivo binario existe, carga los datos desde él
+        std::cout << "Cargando datos desde archivo binario..." << std::endl;
+        LoadDataBinary(binaryFilename, Ux, Uy, totalSize); // Llama a la función para cargar los datos binarios
+    }
+    else
+    {
+        // Si el archivo binario no existe, carga los datos desde los archivos de texto originales
+        std::cout << "Cargando datos desde archivos de texto..." << std::endl;
+        std::ifstream Velocity(NameFile); // Abre el archivo de texto con los datos de velocidad
+        std::ofstream debug("debug.txt"); // Abre un archivo de depuración para verificar la carga
+
+        // Itera sobre la cuadrícula y el tiempo para cargar los datos en los arrays Ux y Uy
+        for (int ix = 0; ix < Lx; ix++)
+        {
+            for (int iy = 0; iy < Ly; iy++)
+            {
+                for (int t = 0; t < t_hour; t++)
+                {
+                    int index = (ix * Ly + iy) * t_hour + t;                                 // Calcula el índice lineal para los arreglos
+                    Velocity >> Ux[index] >> Uy[index];                                      // Lee los datos de velocidad desde el archivo de texto
+                    debug << index + 1 << " " << Ux[index] << " " << Uy[index] << std::endl; // Escribe en el archivo de depuración
+                }
+            }
+        }
+
+        // Cierra los archivos abiertos
+        Velocity.close();
+        debug.close();
+
+        // Guarda los datos en un archivo binario para acelerar futuras ejecuciones
+        SaveDataBinary(binaryFilename, Ux, Uy, totalSize);
+        std::cout << "Datos guardados en archivo binario para futuras ejecuciones." << std::endl;
+    }
+
+    std::cout << "Datos cargados exitosamente" << std::endl;
+}
+
+// Función para cargar los datos desde un archivo binario.
+// Esta función se llama cuando el archivo binario ya existe, lo que permite cargar los datos más rápidamente.
+void LoadDataBinary(const std::string &filename, double *Ux, double *Uy, int size)
+{
+    // Abre el archivo binario en modo lectura
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open())
+    {
+        std::cerr << "Error: No se pudo abrir el archivo binario para cargar los datos." << std::endl;
+        return;
+    }
+
+    // Lee los datos desde el archivo binario y los almacena en los arreglos Ux y Uy
+    file.read(reinterpret_cast<char *>(Ux), size * sizeof(double));
+    file.read(reinterpret_cast<char *>(Uy), size * sizeof(double));
+
+    // Cierra el archivo binario
+    file.close();
+}
+
+// Función para guardar los datos en un archivo binario.
+// Esta función se llama después de cargar los datos desde el archivo de texto por primera vez, para guardar los datos en formato binario.
+void SaveDataBinary(const std::string &filename, double *Ux, double *Uy, int size)
+{
+    // Abre el archivo binario en modo escritura
+    std::ofstream file(filename, std::ios::binary);
+    if (!file.is_open())
+    {
+        std::cerr << "Error: No se pudo abrir el archivo binario para guardar los datos." << std::endl;
+        return;
+    }
+
+    // Escribe los datos de los arreglos Ux y Uy en el archivo binario
+    file.write(reinterpret_cast<const char *>(Ux), size * sizeof(double));
+    file.write(reinterpret_cast<const char *>(Uy), size * sizeof(double));
+
+    // Cierra el archivo binario
+    file.close();
+}
+
 // Funcion main
 int main(int argc, char *argv[])
 {
 
     // Parámetros generales de la simulación
-    int t, tframe = 1000, tmax = t_hour * 100, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
-    // int t, tframe = 100, tmax = 1000, delta_t = 1, ret;              // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
+    int t, tframe = 100, tmax = t_hour * 100, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
+    // int t, tframe = 10, tmax = 1000, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
     // double rho0 = 100000000000, Ux0 = Lx / 100, Uy0 = Ly / 100;             // Densidad inicial y velocidades iniciales en x e y
-    double rho0 = 0.001, Ux0 = 0.01, Uy0 = 0.01;  
+    double rho0 = 10, Ux0 = 0.0, Uy0 = 0.0;
 
     // Parámetros para la distribución gaussiana que inicializa la densidad
     double mu_x = Lx / 2.0, mu_y = Ly / 2.0, sigma_x = Lx / 32.0, sigma_y = Ly / 32.0; // Parámetros de la gaussiana: centro (mu_x, mu_y), sigma: ancho
@@ -368,7 +455,7 @@ int main(int argc, char *argv[])
     // Crear una instancia de la clase LatticeBoltzman
     LatticeBoltzman Air;
 
-    // LoadData("velocity.txt");
+    LoadData("velocity.txt");
 
     // Leer parámetros desde la línea de comandos: término de fuente y coeficiente de difusión
     D = std::stod(argv[1]); // Coeficiente de difusión (ejemplo: 0.016 -> tau = 0.548)
@@ -386,12 +473,12 @@ int main(int argc, char *argv[])
     for (t = 0; t <= tmax; t++)
     {
         
-        Air.Collision(delta_t);
+        Air.Collision();
         Air.ImposeFields(t); // Ux0, Uy0);
-        if(t <=9){
-            Air.ImposeFire(1, 0, 4);//Usme(0,4)
-            Air.ImposeFire(1, 6, 7);//Quebrada la vieja(6,7)
-        }
+        // if(t <=9){
+        //     Air.ImposeFire(1, 0, 4);//Usme(0,4)
+        //     Air.ImposeFire(1, 6, 7);//Quebrada la vieja(6,7)
+        // }
         Air.Advection();
 
         // Guardar resultados cada tframe pasos
