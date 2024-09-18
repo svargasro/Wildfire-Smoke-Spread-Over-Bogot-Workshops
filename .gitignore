@@ -20,3 +20,4 @@ _build
 *.xlsx
 */Codigo/Analisis de Datos/Datos/wrf2024-01-22
 Parciales
+!*/Codigo/Lattice_Boltzmann/fires_coord.txt
