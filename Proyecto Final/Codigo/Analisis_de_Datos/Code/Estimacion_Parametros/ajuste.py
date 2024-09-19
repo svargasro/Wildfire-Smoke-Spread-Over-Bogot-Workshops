@@ -69,7 +69,7 @@ def unlinearize_grid(linearized_array, Lx, Ly):
 
     return density_grid
 
-def objective(rho_sources_opt, stations, density_observed): #Cambio, no entra como parámetro la densidad simulada.
+def objective(rho_sources_opt, stations, density_observed, Lx, Ly, sources_1D, sigma):
     """
     Calcula el error entre la densidad observada y la densidad simulada solo en las celdas que tienen estaciones.
 
@@ -77,6 +77,10 @@ def objective(rho_sources_opt, stations, density_observed): #Cambio, no entra co
     - rho_sources_opt: valores optimizados de rho para las celdas fuente.
     - stations: lista de índices de celdas con estaciones.
     - density_observed: arreglo unidimensional de densidad observada.
+    - Lx, Ly: dimensiones de la grilla.
+    - sources_1D: lista de índices de celdas con fuentes.
+    - sigma: parámetro que afecta la distribución de densidad.
+    
     Returns:
     - error: suma de los cuadrados de las diferencias en las celdas de las estaciones.
     """
@@ -92,13 +96,27 @@ def objective(rho_sources_opt, stations, density_observed): #Cambio, no entra co
     error = np.sum((observed_stations - simulated_stations_opt) ** 2)
     return error
 
-def optimize_parameters_for_cells(stations, density_observed, sources_1D, rho_sources):
-    """Optimiza los valores de rho para las celdas fuente para minimizar el error entre densidad simulada y observada en las estaciones."""
+def optimize_parameters_for_cells(stations, density_observed, sources_1D, rho_sources, Lx, Ly, sigma):
+    """
+    Optimiza los valores de rho para minimizar el error en las estaciones.
+    
+    Parameters:
+    - stations: lista de índices de celdas con estaciones.
+    - density_observed: densidad observada en forma de arreglo unidimensional.
+    - sources_1D: índices de las celdas fuente.
+    - rho_initial: valores iniciales de rho para las celdas fuente.
+    - Lx, Ly: dimensiones de la grilla.
+    - sigma: parámetro que afecta la simulación de la densidad.
+    
+    Returns:
+    - rho_opt: valores optimizados de rho.
+    """
     rho_initial = rho_sources  # Valores iniciales para las celdas fuente
     bounds = [(0.5, 4.0)] * len(sources_1D)  # Restricciones sobre los valores de las celdas fuente
 
     # Ejecutar la optimización
-    result = minimize(objective, rho_initial, args=(stations, density_observed), method='L-BFGS-B', bounds=bounds)
+    result = minimize(objective, rho_initial, args=(stations, density_observed, Lx, Ly, sources_1D, sigma), 
+                      method='L-BFGS-B', bounds=bounds)
 
     # Resultados óptimos
     rho_opt = result.x
@@ -113,29 +131,3 @@ def plot_density_grid(density_grid,Lx,Ly):
     plt.ylabel('Y')
     plt.savefig('TemporalImage.png')
     #plt.show()
-
-if __name__=="__main__":
-    # Ejemplo de uso
-    Lx = 15
-    Ly = 15
-    sigma = 5.0
-    sources_1D = [33, 141, 175,23]  # Índices de celdas con incendio.
-    stations = [21, 70, 81, 122, 133, 3] #Ubicación de las estaciones.
-    initial_rho_sources = [1.0, 2.0, 1.5, 3.4] #Valores iniciales de rho (Investigación Alejandra)
-    rho_sources_random = np.random.uniform(0.5, 4.0, size=4) #Valores de rho reales (Random para probar varias veces)
-
-    # Simular la densidad y obtener una grilla para plot (Densidades en el espacio)
-    density_grid_simulated = LB_density_with_sources(Lx, Ly, sources_1D, initial_rho_sources, sigma)
-    density_grid_obs = LB_density_with_sources(Lx, Ly, sources_1D, rho_sources_random, sigma)
-
-    #Plots de las densidades.
-    #plot_density_grid(density_grid_simulated,Lx,Ly)
-    #plot_density_grid(density_grid_obs,Lx,Ly)
-
-    rho_simulated = linearize_grid(density_grid_simulated)
-    rho_obs = linearize_grid(density_grid_obs)
-
-    # Optimización de los parámetros de las fuentes
-    rho_opt = optimize_parameters_for_cells(stations, rho_obs, sources_1D, initial_rho_sources)
-    density_opt= LB_density_with_sources(Lx, Ly, sources_1D, rho_opt, sigma)
-    print("Valores óptimos de rho:", rho_opt, rho_sources_random)
