@@ -8,14 +8,14 @@
 
 //-------------------------------CONSTANTES GLOBALES------------------------
 // Dimensiones de la cuadrícula
-const int Lx = 100; // 100
-const int Ly = Lx*(1.4); // 140
-int iter_per_hour = 3;
+const int Ly = 100; // 100
+const int Lx = Ly*(1.4); // 140
+int iter_per_hour = 320;
 //int iter_per_hour = 9604;
 
 const int Q = 9;// Número de direcciones en el espacio de velocidades
 
-int t_hour = 120;
+int t_hour = 240;
 //int t_hour = 240;
 double *Ux = new double[Lx * Ly * t_hour];
 double *Uy = new double[Lx * Ly * t_hour]; // Velocidades en x y y
@@ -205,6 +205,7 @@ void LatticeBoltzman::ImposeFields(int t)
     double rho0;
     int auxT=(t+1)/iter_per_hour;
     double Ux0,Uy0;
+    int index_tmp = 0;
     for (int ix = 0; ix < Lx; ix++)
     {
         for (int iy = 0; iy < Ly; iy++)
@@ -219,20 +220,28 @@ void LatticeBoltzman::ImposeFields(int t)
             // }
         {
             int index = ix*Ly+iy +Lx*Ly*auxT;
+            int index_tmp =0;
             Ux0 = Ux[index];
             Uy0 = Uy[index];
             rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
             for (int i = 0; i < Q; i++)
             {
                 int n0 = n(ix, iy, i);
-                if(ix*Ly+iy == id[index_f] && (t+1)%(iter_per_hour*24)==0 && IsData){
-                    std::cout<<"Indice i_f "<<index_f<<std::endl;
-                    std::cout<<"Id_ "<<id[index_f]<<std::endl;
+                if(((ix*Ly)+iy) == id[index_f] && IsData){
+                    //std::cout<<"Indice i_f "<<index_f<<std::endl;
+                    //std::cout<<"Id_ "<<id[index_f]<<std::endl;
+                    //std::cout<<"t "<<t<<std::endl;
                     fnew[n0] = feq(rho_f[index_f], Ux0, Uy0, i);
-                    index_f++;
+                    if(i==Q-1){
+                        index_f++;
+                        index_tmp++;}
+                    if((t+1)%(iter_per_hour*24)!=0)index_f=index_f-index_tmp;
                     if(index_f >= id.size()) IsData = false;
 
                 }
+                //else if(ix*Ly+iy == id[index_f-index_tmp]){
+
+                //}
                 else{
                     fnew[n0] = feq(rho0, Ux0, Uy0, i);
                 }
@@ -310,9 +319,9 @@ void LatticeBoltzman::PrintFrame(double t)
     GnuplotScript << "set output 'frames/density_" << std::setw(3) << std::setfill('0') << t << ".png'" << std::endl; // Nombre del archivo de salida PNG, numerado según el tiempo de simulación
     GnuplotScript << "set pm3d map" << std::endl;                                                                     // Usar un mapa de calor (pm3d) para visualizar los datos
     GnuplotScript << "set size ratio -1" << std::endl;                                                                // Mantener una relación de aspecto cuadrada
-    GnuplotScript << "set xrange [0:" << Lx << "]" << std::endl;                                                      // Definir los límites de los ejes x e y, basados en las dimensiones de la cuadrícula
-    GnuplotScript << "set yrange [0:" << Ly << "]" << std::endl;
-    GnuplotScript << "set cbrange [0:0.05]" << std::endl;                                                                        // Configurar la escala de colores (color bar) para los valores de densidad
+    GnuplotScript << "set xrange [0:" << Ly << "]" << std::endl;                                                      // Definir los límites de los ejes x e y, basados en las dimensiones de la cuadrícula
+    GnuplotScript << "set yrange [0:" << Lx << "]" << std::endl;
+    GnuplotScript << "set cbrange [0:5000000]" << std::endl;                                                                        // Configurar la escala de colores (color bar) para los valores de densidad
     GnuplotScript << "set palette defined (0 'black', 1 'red', 2 'orange', 3 'yellow', 4 'white')" << std::endl;              // Definir la paleta de colores, de negro a blanco pasando por rojo, naranja y amarillo
     GnuplotScript << "set title 'Densidad en t = " << t << "'" << std::endl;                                                  // Definir el título del gráfico, basado en el tiempo de simulación actual
     GnuplotScript << "plot 'data/density_" << std::setw(3) << std::setfill('0') << t << ".dat' u 1:2:3 w image" << std::endl; // Instrucción para graficar los datos de densidad desde el archivo correspondiente
@@ -378,11 +387,8 @@ void LoadData(std::string NameFile)
 }
 
 void LoadDataFires(std::string NameFile){
-    // Remueve la extensión ".txt" del archivo y reemplázala con ".bin"
-    std::string binaryFilename = NameFile.substr(0, NameFile.find_last_of('.')) + ".bin";
-        // Carga los datos desde "coordenadasfuentesgrilla1410.txt" en los vectores id y rho_f
-        std::string coordinateFile = "coordenadasfuentesgrilla1410.txt";
-        std::ifstream coordFile(coordinateFile);
+        // Carga los datos desde el archivo de texto
+        std::ifstream coordFile(NameFile);
 
         if (!coordFile.is_open()) {
             std::cerr << "No se pudo abrir el archivo de coordenadas." << std::endl;
@@ -440,7 +446,7 @@ void SaveDataBinary(const std::string &filename, double *Ux, double *Uy, int siz
 // Funcion main
 int main(int argc, char* argv[]){
     // Parámetros de la simulación
-    int tframe = iter_per_hour*2, tmax = iter_per_hour*t_hour, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
+    int tframe = iter_per_hour, tmax = iter_per_hour*t_hour, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
 
     // Densidad inicial y velocidad 
     double rho0 = 0.00001, Ux0 = 0.0, Uy0 = 0.0; 
