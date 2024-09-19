@@ -4,59 +4,60 @@
 #include <string>    // Para el manejo de strings
 #include <iomanip>   // Para setw y setfill
 #include <algorithm> // Para std::fill
+#include <vector>
 
 //-------------------------------CONSTANTES GLOBALES------------------------
 // Dimensiones de la cuadrícula
-// const int Lx = 500; // 100
 const int Lx = 100; // 100
 const int Ly = Lx*(1.4); // 140
-int iter_per_hour = 9604;
+int iter_per_hour = 3;
+//int iter_per_hour = 9604;
 
+const int Q = 9;// Número de direcciones en el espacio de velocidades
 
-int t_hour = 240;
+int t_hour = 120;
+//int t_hour = 240;
 double *Ux = new double[Lx * Ly * t_hour];
 double *Uy = new double[Lx * Ly * t_hour]; // Velocidades en x y y
 
-// Número de direcciones en el espacio de velocidades
-const int Q = 9;
+//Variables para añadir fuentes del incendio
+std::vector<int> id;
+std::vector<int> rho_f;
+int index_f = 0;
+bool IsData = true;
 
-// Velocidad del lattice y velocidad del sonido
-const double C = 1;            // Velocidad característica del lattice
-const double Cs = C / sqrt(3); // Velocidad de la onda sonora
-const double Cs2 = Cs * Cs;    // Velocidad de la onda sonora al cuadrado
+const double C = 1;//
+const double Cs = C/sqrt(3);// Velocidad de la onda sonora
+const double Cs2 = Cs * Cs;// Velocidad de la onda sonora al cuadrado
 
-//-------------------------------VARIABLES GLOBALES------------------------
+//-------------------------------VARIBLES GLOBALES------------------------
 
-// Parámetros de difusión y relajación
 double D = 0.016; // Coeficiente de difusión
-double tau;       // Tiempo de relajación
-double Utau;      // Inverso del tiempo de relajación
-double UmUtau;    // 1 - 1/tau
+double tau; // Tiempo de relajación 
+double Utau;  // Inverso del tiempo de relajación
+double UmUtau; // 1 - 1/tau
 
 //-------------------------------CLASES--------------------------------------
-// Clase para el método de Lattice Boltzmann
-class LatticeBoltzman
-{
+//--------------------- class LatticeBoltzman ------------
+class LatticeBoltzman{
     private:
         double w[Q];      // Pesos de las direcciones
         int Vx[Q], Vy[Q]; // Vectores de velocidad en las direcciones x e y
         double *f, *fnew; // Funciones de distribución para los diferentes estados (previo, actual y nuevo)
-
     public:
-        LatticeBoltzman(void);                                                                                     // Constructor
-        ~LatticeBoltzman(void);                                                                                    // Destructor
-        int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i; };                                           // Conversión de índices 2D a 1D
-        double rho(int ix, int iy, bool UseNew);                                                                   // Cálculo de la densidad
-        double Jx(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en x
-        double Jy(int ix, int iy, bool UseNew);                                                                    // Cálculo del flujo en y
-        double feq(double rho0, double Ux0, double Uy0, int i);                                                    // Función de equilibrio
-        double fsource(double rho0, double Ux0, double Uy0, int i, int ind);                                       // Término de fuente
-        void Collision();                                                                                          // Fase de colisión
-        void ImposeFields(int t_hour);                                                     // Imponer campos de velocidad
-        void Advection(void);                                                                                      // Fase de advección
-        void Start(double rho0, double Ux0, double Uy0, double mu_x, double mu_y, double sigma_x, double sigma_y); // Inicialización
-        void PrintData(std::string NameFile, double t);                                                            // Imprimir resultados a archivo
-        void PrintFrame(double t);                                                                                 // Generar y guardar el frame de la simulación
+    LatticeBoltzman(void);
+    ~LatticeBoltzman(void);
+    int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i;};
+    double rho(int ix, int iy, bool UseNew);
+    double Jx(int ix, int iy, bool UseNew);
+    double Jy(int ix, int iy, bool UseNew);
+    double feq(double rho0, double Ux0, double Uy0, int i);
+    void Collision();
+    void ImposeFields(int t);
+    void Advection(void);
+    void Start(double rho0, double Ux0, double Uy0);
+    void PrintData(std::string NameFile, double t);                                                            // Imprimir resultados a archivo
+    void PrintFrame(double t);                                                                                 // Generar y guardar el frame de la simulación
 };
 
 //-------------------------------FUNCIONES GLOBALES------------------------
@@ -64,43 +65,27 @@ class LatticeBoltzman
 void LoadData(std::string NameFile);                 // Cargar los datos de velocidad desde un archivo
 void LoadDataBinary(const std::string &filename, double *Ux, double *Uy, int size); // Cargar los datos desde un archivo binario
 void SaveDataBinary(const std::string &filename, double *Ux, double *Uy, int size); // Guardar los datos en un archivo binario
+void LoadDataFires(std::string NameFile);
 
-//-------------------------------IMPLEMENTACIÓN DE LA CLASE LatticeBoltzman------------------------
 
-// Constructor: Inicializa pesos, velocidades y distribuciones
-LatticeBoltzman::LatticeBoltzman(void)
-{
-    // Asignación de los pesos para cada dirección
+LatticeBoltzman::LatticeBoltzman(void){ 
+    // Set the weights
     w[0] = 4.0 / 9;
     w[1] = w[2] = w[3] = w[4] = 1.0 / 9;
     w[5] = w[6] = w[7] = w[8] = 1.0 / 36;
+    // Set the velocity vectors
+    Vx[8] = 1;  Vx[1] = 1;  Vx[5] = 1;
+    Vx[4] = 0;  Vx[0] = 0;  Vx[2] = 0;
+    Vx[7] = -1; Vx[3] = -1; Vx[6] = -1;
 
-    // Asignación de los vectores de velocidad
-    Vx[8] = 1;
-    Vx[1] = 1;
-    Vx[5] = 1;
-    Vx[4] = 0;
-    Vx[0] = 0;
-    Vx[2] = 0;
-    Vx[7] = -1;
-    Vx[3] = -1;
-    Vx[6] = -1;
-
-    Vy[8] = -1;
-    Vy[1] = 0;
-    Vy[5] = 1;
-    Vy[4] = -1;
-    Vy[0] = 0;
-    Vy[2] = 1;
-    Vy[7] = -1;
-    Vy[3] = 0;
-    Vy[6] = 1;
+    Vy[8] = -1; Vy[1] = 0;  Vy[5] = 1;
+    Vy[4] = -1; Vy[0] = 0;  Vy[2] = 1;
+    Vy[7] = -1; Vy[3] = 0;  Vy[6] = 1;
 
     // Creación de los arreglos dinámicos para las funciones de distribución
     int ArraySize = Lx * Ly * Q;
     f = new double[ArraySize]();
     fnew = new double[ArraySize]();
-
 }
 
 // Destructor: libera la memoria dinámica
@@ -119,13 +104,11 @@ double LatticeBoltzman::rho(int ix, int iy, bool UseNew)
     {
         int n0 = n(ix, iy, i);
 
-
         if (UseNew)
             sum += fnew[n0];
         else
             sum += f[n0];
     }
-    // std::cout<<"rho: "<<sum<<std::endl;
     return sum;
 }
 // Función para calcular el flujo en la dirección x
@@ -172,8 +155,7 @@ double LatticeBoltzman::feq(double rho0, double Ux0, double Uy0, int i)
 // ---------------------Evolución temporal---------------------
 
 // Inicialización de la función de distribución y condiciones iniciales
-void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
-                            double mu_x, double mu_y, double sigma_x, double sigma_y)
+void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0)
 {
     int ix, iy, i, n0;
 
@@ -182,10 +164,8 @@ void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
     {
         for (iy = 0; iy < Ly; iy++) // Para cada celda en el eje y
         {
-            // Calcular el valor de la función gaussiana en las direcciones x e y
-            double gauss_x = exp(-0.5 * pow((ix - mu_x) / sigma_x, 2)) / (sigma_x * sqrt(2 * M_PI));
-            double gauss_y = exp(-0.5 * pow((iy - mu_y) / sigma_y, 2)) / (sigma_y * sqrt(2 * M_PI));
-            double rho = rho0*gauss_x*gauss_y;
+            double rho = rho0;
+
             // Inicializar las funciones de distribución en todas las direcciones de velocidad
             for (i = 0; i < Q; i++) // Para cada dirección de la función de distribución
             {
@@ -220,18 +200,24 @@ void LatticeBoltzman::Collision()
     }
 }
 
-// Imponer campos de velocidad
 void LatticeBoltzman::ImposeFields(int t)
 {
-    // Implementación para imponer un campo de velocidad constante
     double rho0;
     int auxT=(t+1)/iter_per_hour;
     double Ux0,Uy0;
     for (int ix = 0; ix < Lx; ix++)
     {
         for (int iy = 0; iy < Ly; iy++)
+                    // int index = ix*Ly+iy +Lx*Ly*auxT;
+            // if((t+1)%iter_per_hour == 0)  index_f = index_f + fire_per_hour;
+            // Ux0 = Ux[index];
+            // Uy0 = Uy[index];
+            // rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
+            // if(ix*Ly+iy == id[index_f]){
+            //     rho0 = rho_f[index_f];
+            //     index_f++;
+            // }
         {
-
             int index = ix*Ly+iy +Lx*Ly*auxT;
             Ux0 = Ux[index];
             Uy0 = Uy[index];
@@ -239,19 +225,22 @@ void LatticeBoltzman::ImposeFields(int t)
             for (int i = 0; i < Q; i++)
             {
                 int n0 = n(ix, iy, i);
-                fnew[n0] = feq(rho0, Ux0, Uy0, i);
+                if(ix*Ly+iy == id[index_f] && (t+1)%(iter_per_hour*24)==0 && IsData){
+                    std::cout<<"Indice i_f "<<index_f<<std::endl;
+                    std::cout<<"Id_ "<<id[index_f]<<std::endl;
+                    fnew[n0] = feq(rho_f[index_f], Ux0, Uy0, i);
+                    index_f++;
+                    if(index_f >= id.size()) IsData = false;
+
+                }
+                else{
+                    fnew[n0] = feq(rho0, Ux0, Uy0, i);
+                }
             }
         }   
     }
 }
 
-// void LatticeBoltzman::ImposeFire(int rho, int ix, int iy){
-//     for (int i = 0; i < Q; i++){
-//         int n0 = n(ix, iy, i);
-        
-//         fnew[n0] = feq(rho, 0, 0, i);
-//     }
-// }
 void LatticeBoltzman::Advection(void){
     int ix, iy, i, ixnext, iynext, n0, n0next;
 
@@ -284,18 +273,16 @@ void LatticeBoltzman::PrintData(std::string NameFile, double t)
     double rho0, Ux0, Uy0;
     int step = 1;
 
-    // Recorre la cuadrícula en pasos de 4 para ahorrar espacio en los archivos de salida
+    // Recorre la cuadrícula en pasos de a step para ahorrar espacio en los archivos de salida
     for (int ix = 0; ix < Lx; ix += step)
     {
         for (int iy = 0; iy < Ly; iy += step)
         {
             // Calcula la densidad (rho0) y las velocidades (Ux0, Uy0) para cada celda
             rho0 = rho(ix, iy, false);      // Densidad en la celda (ix, iy)
-            Ux0 = Jx(ix, iy, false) / rho0; // Velocidad en x
-            Uy0 = Jy(ix, iy, false) / rho0; // Velocidad en y
 
             // Escribe los datos en el archivo de salida
-            MyFile << ix << " " << iy << " "<< rho0 << " " << Ux0 << " " << Uy0 << std::endl;
+            MyFile << ix << " " << iy << " "<< rho0 << std::endl;
         }
         MyFile << std::endl; // Inserta un salto de línea después de cada fila de la cuadrícula
     }
@@ -325,7 +312,7 @@ void LatticeBoltzman::PrintFrame(double t)
     GnuplotScript << "set size ratio -1" << std::endl;                                                                // Mantener una relación de aspecto cuadrada
     GnuplotScript << "set xrange [0:" << Lx << "]" << std::endl;                                                      // Definir los límites de los ejes x e y, basados en las dimensiones de la cuadrícula
     GnuplotScript << "set yrange [0:" << Ly << "]" << std::endl;
-    GnuplotScript << "set cbrange [0:*]" << std::endl;                                                                        // Configurar la escala de colores (color bar) para los valores de densidad
+    GnuplotScript << "set cbrange [0:0.05]" << std::endl;                                                                        // Configurar la escala de colores (color bar) para los valores de densidad
     GnuplotScript << "set palette defined (0 'black', 1 'red', 2 'orange', 3 'yellow', 4 'white')" << std::endl;              // Definir la paleta de colores, de negro a blanco pasando por rojo, naranja y amarillo
     GnuplotScript << "set title 'Densidad en t = " << t << "'" << std::endl;                                                  // Definir el título del gráfico, basado en el tiempo de simulación actual
     GnuplotScript << "plot 'data/density_" << std::setw(3) << std::setfill('0') << t << ".dat' u 1:2:3 w image" << std::endl; // Instrucción para graficar los datos de densidad desde el archivo correspondiente
@@ -390,6 +377,26 @@ void LoadData(std::string NameFile)
     std::cout << "Datos cargados exitosamente" << std::endl;
 }
 
+void LoadDataFires(std::string NameFile){
+    // Remueve la extensión ".txt" del archivo y reemplázala con ".bin"
+    std::string binaryFilename = NameFile.substr(0, NameFile.find_last_of('.')) + ".bin";
+        // Carga los datos desde "coordenadasfuentesgrilla1410.txt" en los vectores id y rho_f
+        std::string coordinateFile = "coordenadasfuentesgrilla1410.txt";
+        std::ifstream coordFile(coordinateFile);
+
+        if (!coordFile.is_open()) {
+            std::cerr << "No se pudo abrir el archivo de coordenadas." << std::endl;
+            return;
+        }
+
+        int temp_id, temp_rho_f;
+        while (coordFile >> temp_id >> temp_rho_f) {
+            id.push_back(temp_id);
+            rho_f.push_back(temp_rho_f);
+        }
+        coordFile.close();
+}
+
 // Función para cargar los datos desde un archivo binario.
 // Esta función se llama cuando el archivo binario ya existe, lo que permite cargar los datos más rápidamente.
 void LoadDataBinary(const std::string &filename, double *Ux, double *Uy, int size)
@@ -431,24 +438,17 @@ void SaveDataBinary(const std::string &filename, double *Ux, double *Uy, int siz
 }
 
 // Funcion main
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]){
+    // Parámetros de la simulación
+    int tframe = iter_per_hour*2, tmax = iter_per_hour*t_hour, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
 
-    // Parámetros generales de la simulación
-    int t, tframe = 200, tmax = t_hour *40, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
-    // int t, tframe = 10, tmax = 1000, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
-    // double rho0 = 100000000000, Ux0 = Lx / 100, Uy0 = Ly / 100;             // Densidad inicial y velocidades iniciales en x e y
-    double rho0 = 10, Ux0 = 0.0, Uy0 = 0.0;
-
-    // Parámetros para la distribución gaussiana que inicializa la densidad
-    double mu_x = Lx / 2.0, mu_y = Ly / 2.0, sigma_x = Lx / 32.0, sigma_y = Ly / 32.0; // Parámetros de la gaussiana: centro (mu_x, mu_y), sigma: ancho
-
-    // std::cout << mu_x << " " << mu_y << " " << sigma_x << " " << sigma_y << std::endl;
-
+    // Densidad inicial y velocidad 
+    double rho0 = 0.00001, Ux0 = 0.0, Uy0 = 0.0; 
     // Crear una instancia de la clase LatticeBoltzman
     LatticeBoltzman Air;
 
     LoadData("velocity.txt");
+    LoadDataFires("coordenadasfuentesgrilla1410.txt");
 
     // Leer parámetros desde la línea de comandos: término de fuente y coeficiente de difusión
     D = std::stod(argv[1]); // Coeficiente de difusión (ejemplo: 0.016 -> tau = 0.548)
@@ -461,24 +461,19 @@ int main(int argc, char *argv[])
     UmUtau = 1 - Utau; // 1 - 1/tau
 
     // Inicializar la simulación con las condiciones iniciales (densidad y velocidades)
-    Air.Start(rho0, Ux0, Uy0, mu_x, mu_y, sigma_x, sigma_y);
-    // Bucle principal de la simulación
+    Air.Start(rho0, Ux0, Uy0);
 
-    for (t = 0; t <= tmax; t++)
+    // Bucle principal de la simulación
+    for (int t = 0; t <= tmax; t++)
     {
+        
         Air.Collision();
         Air.ImposeFields(t); // Ux0, Uy0);
-        // if(t <=9){
-        //     Air.ImposeFire(1, 0, 4);//Usme(0,4)
-        //     Air.ImposeFire(1, 6, 7);//Quebrada la vieja(6,7)
-        // }
         Air.Advection();
 
         // Guardar resultados cada tframe pasos
-
         if (t % tframe == 0)
         {
-
             // Verificar si el directorio "data" existe, de lo contrario, crearlo
             if (system("test -d data") != 0)
             {
@@ -499,6 +494,5 @@ int main(int argc, char *argv[])
             std::cout << "Porcentaje de avance: " << (t * 100) / tmax << "%" << std::endl;
         }
     }
-
     return 0;
 }
