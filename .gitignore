@@ -11,16 +11,13 @@ _build
 *.o
 ##Archivos de los datos
 *.dat
+*.txt
 #*.csv
 #*.pdf
 *.o
 *.x
-*.xlsx
-
 ##Carpetas
+*.xlsx
+*/Codigo/Analisis de Datos/Datos/wrf2024-01-22
 Parciales
 Talleres
-
-
-
-
