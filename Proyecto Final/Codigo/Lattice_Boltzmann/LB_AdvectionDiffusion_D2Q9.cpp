@@ -10,12 +10,12 @@
 // Dimensiones de la cuadrícula
 const int Ly = 100; // 100
 const int Lx = Ly*(1.4); // 140
-int iter_per_hour = 320;
+int iter_per_hour = 5;
 //int iter_per_hour = 9604;
 
 const int Q = 9;// Número de direcciones en el espacio de velocidades
 
-int t_hour = 240;
+int t_hour = 73;
 //int t_hour = 240;
 double *Ux = new double[Lx * Ly * t_hour];
 double *Uy = new double[Lx * Ly * t_hour]; // Velocidades en x y y
@@ -324,7 +324,7 @@ void LatticeBoltzman::PrintFrame(double t)
     GnuplotScript << "set cbrange [0:5000000]" << std::endl;                                                                        // Configurar la escala de colores (color bar) para los valores de densidad
     GnuplotScript << "set palette defined (0 'black', 1 'red', 2 'orange', 3 'yellow', 4 'white')" << std::endl;              // Definir la paleta de colores, de negro a blanco pasando por rojo, naranja y amarillo
     GnuplotScript << "set title 'Densidad en t = " << t << "'" << std::endl;                                                  // Definir el título del gráfico, basado en el tiempo de simulación actual
-    GnuplotScript << "plot 'data/density_" << std::setw(3) << std::setfill('0') << t << ".dat' u 1:2:3 w image" << std::endl; // Instrucción para graficar los datos de densidad desde el archivo correspondiente
+    GnuplotScript << "plot 'data/density_" << std::setw(3) << std::setfill('0') << t << ".dat' u 2:1:3 w image" << std::endl; // Instrucción para graficar los datos de densidad desde el archivo correspondiente
     GnuplotScript.close();                                                                                                    // Cerrar el archivo de script
 
     // Ejecutar el script de Gnuplot para generar la imagen PNG
