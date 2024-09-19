@@ -9,10 +9,12 @@ if __name__=="__main__":
     sigma = 5.0
     sources_1D = [33, 141, 175,23]  # Índices de celdas con incendio.
     initial_rho_sources = [1.0, 2.0, 1.5, 3.4] #Valores iniciales de rho (Investigación Alejandra)
-    stations = obs_data.coord_est()   #Ubicación de las estaciones.
-    #stations = [21, 70, 81, 122, 133, 3] #Ubicación de las estaciones.
-    rho_sources_random = np.random.uniform(0.5, 4.0, size=4) #Valores de rho reales (Random para probar varias veces)
-
+    stations = obs_data.coord_est('../../Data/estaciones_coord.txt')   #Ubicación de las estaciones.
+    PM_base = obs_data.PM_base('../../Data/PM_base.csv') #Datos de contaminación observado para 10 dias
+    #print(PM_base)
+    #print(stations)
+    rho_sources_random = PM_base[:16] #Valores de rho reales (Random para probar varias veces)
+    #print(rho_sources_random)
     # Simular la densidad y obtener una grilla para plot (Densidades en el espacio)
     density_grid_simulated = ajuste.LB_density_with_sources(Lx, Ly, sources_1D, initial_rho_sources, sigma)
     density_grid_obs = ajuste.LB_density_with_sources(Lx, Ly, sources_1D, rho_sources_random, sigma)
