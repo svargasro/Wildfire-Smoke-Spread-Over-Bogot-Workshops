@@ -1,23 +1,26 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
-#include <string>  // Add this line to include the <string> header
-#include <iomanip> // iomap sirve para setw y setfill
-#include <algorithm> // std::
+#include <string>    // Para el manejo de strings
+#include <iomanip>   // Para setw y setfill
+#include <algorithm> // Para std::fill
 #include <vector>
 
 //-------------------------------CONSTANTES GLOBALES------------------------
 // Dimensiones de la cuadrícula
 const int Lx = 100; // 100
 const int Ly = Lx*(1.4); // 140
-int iter_per_hour = 9604;
+int iter_per_hour = 3;
+//int iter_per_hour = 9604;
 
 const int Q = 9;// Número de direcciones en el espacio de velocidades
 
-int t_hour = 240;
+int t_hour = 120;
+//int t_hour = 240;
 double *Ux = new double[Lx * Ly * t_hour];
 double *Uy = new double[Lx * Ly * t_hour]; // Velocidades en x y y
 
+//Variables para añadir fuentes del incendio
 std::vector<int> id;
 std::vector<int> rho_f;
 int index_f = 0;
@@ -27,11 +30,9 @@ const double C = 1;//
 const double Cs = C/sqrt(3);// Velocidad de la onda sonora
 const double Cs2 = Cs * Cs;// Velocidad de la onda sonora al cuadrado
 
-const double theta = 1; // Coeficiente de relajación para el término de fuente
-
 //-------------------------------VARIBLES GLOBALES------------------------
 
-double D; // Coeficiente de difusión
+double D = 0.016; // Coeficiente de difusión
 double tau; // Tiempo de relajación 
 double Utau;  // Inverso del tiempo de relajación
 double UmUtau; // 1 - 1/tau
@@ -39,11 +40,11 @@ double UmUtau; // 1 - 1/tau
 //-------------------------------CLASES--------------------------------------
 //--------------------- class LatticeBoltzman ------------
 class LatticeBoltzman{
-private:
-    double w[Q];           // Pesos
-    int Vx[Q], Vy[Q];      // Vectores de velocidad
-    double *f, *fnew;      // Funciones de distribución
-public:
+    private:
+        double w[Q];      // Pesos de las direcciones
+        int Vx[Q], Vy[Q]; // Vectores de velocidad en las direcciones x e y
+        double *f, *fnew; // Funciones de distribución para los diferentes estados (previo, actual y nuevo)
+    public:
     LatticeBoltzman(void);
     ~LatticeBoltzman(void);
     int n(int ix, int iy, int i) { return (ix * Ly + iy) * Q + i;};
@@ -51,13 +52,10 @@ public:
     double Jx(int ix, int iy, bool UseNew);
     double Jy(int ix, int iy, bool UseNew);
     double feq(double rho0, double Ux0, double Uy0, int i);
-    //double fsource(double rho0, double Ux0, double Uy0, int i, int ind);
-    //double dif_fsource(double rho0, double Ux0, double Uy0, int i, int ind, double delta_t);
     void Collision();
     void ImposeFields(int t);
-    void ImposeFire(int rho, int ix, int iy);
     void Advection(void);
-    void Start(double rho0, double Ux0, double Uy0, double mu_x,double mu_y, double sigma_x, double sigma_y);
+    void Start(double rho0, double Ux0, double Uy0);
     void PrintData(std::string NameFile, double t);                                                            // Imprimir resultados a archivo
     void PrintFrame(double t);                                                                                 // Generar y guardar el frame de la simulación
 };
@@ -67,6 +65,7 @@ public:
 void LoadData(std::string NameFile);                 // Cargar los datos de velocidad desde un archivo
 void LoadDataBinary(const std::string &filename, double *Ux, double *Uy, int size); // Cargar los datos desde un archivo binario
 void SaveDataBinary(const std::string &filename, double *Ux, double *Uy, int size); // Guardar los datos en un archivo binario
+void LoadDataFires(std::string NameFile);
 
 
 LatticeBoltzman::LatticeBoltzman(void){ 
@@ -148,15 +147,15 @@ double LatticeBoltzman::feq(double rho0, double Ux0, double Uy0, int i)
 {
     double UdotVi = Ux0 * Vx[i] + Uy0 * Vy[i];
     double U2 = Ux0 * Ux0 + Uy0 * Uy0;
-    double result = rho0 * w[i] * (1 + UdotVi / Cs2 + (UdotVi * UdotVi) / (2 * Cs2 * Cs2) - U2 / (2 * Cs2));
+    double result = rho0 * w[i] * (1 + UdotVi / Cs2 + (UdotVi * UdotVi) / (2.0 * Cs2 * Cs2) - U2 / (2.0 * Cs2));
+
     return result;
 }
 
 // ---------------------Evolución temporal---------------------
 
 // Inicialización de la función de distribución y condiciones iniciales
-void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
-                            double mu_x, double mu_y, double sigma_x, double sigma_y)
+void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0)
 {
     int ix, iy, i, n0;
 
@@ -165,10 +164,7 @@ void LatticeBoltzman::Start(double rho0, double Ux0, double Uy0,
     {
         for (iy = 0; iy < Ly; iy++) // Para cada celda en el eje y
         {
-            // Calcular el valor de la función gaussiana en las direcciones x e y
-            double gauss_x = exp(-0.5 * pow((ix - mu_x) / sigma_x, 2)) / (sigma_x * sqrt(2 * M_PI));
-            double gauss_y = exp(-0.5 * pow((iy - mu_y) / sigma_y, 2)) / (sigma_y * sqrt(2 * M_PI));
-            double rho = rho0; //* gauss_x * gauss_y;
+            double rho = rho0;
 
             // Inicializar las funciones de distribución en todas las direcciones de velocidad
             for (i = 0; i < Q; i++) // Para cada dirección de la función de distribución
@@ -212,6 +208,15 @@ void LatticeBoltzman::ImposeFields(int t)
     for (int ix = 0; ix < Lx; ix++)
     {
         for (int iy = 0; iy < Ly; iy++)
+                    // int index = ix*Ly+iy +Lx*Ly*auxT;
+            // if((t+1)%iter_per_hour == 0)  index_f = index_f + fire_per_hour;
+            // Ux0 = Ux[index];
+            // Uy0 = Uy[index];
+            // rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
+            // if(ix*Ly+iy == id[index_f]){
+            //     rho0 = rho_f[index_f];
+            //     index_f++;
+            // }
         {
             int index = ix*Ly+iy +Lx*Ly*auxT;
             Ux0 = Ux[index];
@@ -220,7 +225,7 @@ void LatticeBoltzman::ImposeFields(int t)
             for (int i = 0; i < Q; i++)
             {
                 int n0 = n(ix, iy, i);
-                if(ix*Ly+iy == id[index_f] && t%t_hour==0 && IsData){
+                if(ix*Ly+iy == id[index_f] && (t+1)%(iter_per_hour*24)==0 && IsData){
                     std::cout<<"Indice i_f "<<index_f<<std::endl;
                     std::cout<<"Id_ "<<id[index_f]<<std::endl;
                     fnew[n0] = feq(rho_f[index_f], Ux0, Uy0, i);
@@ -268,18 +273,16 @@ void LatticeBoltzman::PrintData(std::string NameFile, double t)
     double rho0, Ux0, Uy0;
     int step = 1;
 
-    // Recorre la cuadrícula en pasos de 4 para ahorrar espacio en los archivos de salida
+    // Recorre la cuadrícula en pasos de a step para ahorrar espacio en los archivos de salida
     for (int ix = 0; ix < Lx; ix += step)
     {
         for (int iy = 0; iy < Ly; iy += step)
         {
             // Calcula la densidad (rho0) y las velocidades (Ux0, Uy0) para cada celda
             rho0 = rho(ix, iy, false);      // Densidad en la celda (ix, iy)
-            Ux0 = Jx(ix, iy, false) / rho0; // Velocidad en x
-            Uy0 = Jy(ix, iy, false) / rho0; // Velocidad en y
 
             // Escribe los datos en el archivo de salida
-            MyFile << ix << " " << iy << " "<< rho0 << " " << Ux0 << " " << Uy0 << std::endl;
+            MyFile << ix << " " << iy << " "<< rho0 << std::endl;
         }
         MyFile << std::endl; // Inserta un salto de línea después de cada fila de la cuadrícula
     }
@@ -327,8 +330,8 @@ void LatticeBoltzman::PrintFrame(double t)
 // Si el archivo binario no existe, carga los datos desde un archivo de texto y luego los guarda en formato binario para futuras ejecuciones.
 void LoadData(std::string NameFile)
 {
-    // Remueve la extensión ".txt" del archivo y reemplázala con ".bin"
-    std::string binaryFilename = NameFile.substr(0, NameFile.find_last_of('.')) + ".bin";
+    // Nombre del archivo binario para almacenar los datos
+    const std::string binaryFilename = "velocity.bin";
 
     // Calcula el tamaño total de los datos a cargar (número de elementos)
     int totalSize = Lx * Ly * t_hour;
@@ -344,24 +347,39 @@ void LoadData(std::string NameFile)
     else
     {
         // Si el archivo binario no existe, carga los datos desde los archivos de texto originales
-        // std::cout << "Cargando datos desde archivos de texto..." << std::endl;
-        // std::ifstream Velocity(NameFile); // Abre el archivo de texto con los datos de velocidad
-        // std::ofstream debug("debug.txt"); // Abre un archivo de depuración para verificar la carga
+        std::cout << "Cargando datos desde archivos de texto..." << std::endl;
+        std::ifstream Velocity(NameFile); // Abre el archivo de texto con los datos de velocidad
+        std::ofstream debug("debug.txt"); // Abre un archivo de depuración para verificar la carga
 
-        // // Itera sobre la cuadrícula y el tiempo para cargar los datos en los arrays Ux y Uy
-        // for (int ix = 0; ix < Lx; ix++)
-        // {
-        //     for (int iy = 0; iy < Ly; iy++)
-        //     {
-        //         for (int t = 0; t < t_hour; t++)
-        //         {
-        //             int index = (ix * Ly + iy) * t_hour + t;                                 // Calcula el índice lineal para los arreglos
-        //             Velocity >> Ux[index] >> Uy[index];                                      // Lee los datos de velocidad desde el archivo de texto
-        //             debug << index + 1 << " " << Ux[index] << " " << Uy[index] << std::endl; // Escribe en el archivo de depuración
-        //         }
-        //     }
-        // }
+        // Itera sobre la cuadrícula y el tiempo para cargar los datos en los arrays Ux y Uy
+        for (int ix = 0; ix < Lx; ix++)
+        {
+            for (int iy = 0; iy < Ly; iy++)
+            {
+                for (int t = 0; t < t_hour; t++)
+                {
+                    int index = (ix * Ly + iy) * t_hour + t;                                 // Calcula el índice lineal para los arreglos
+                    Velocity >> Ux[index] >> Uy[index];                                      // Lee los datos de velocidad desde el archivo de texto
+                    debug << index + 1 << " " << Ux[index] << " " << Uy[index] << std::endl; // Escribe en el archivo de depuración
+                }
+            }
+        }
 
+        // Cierra los archivos abiertos
+        Velocity.close();
+        debug.close();
+
+        // Guarda los datos en un archivo binario para acelerar futuras ejecuciones
+        SaveDataBinary(binaryFilename, Ux, Uy, totalSize);
+        std::cout << "Datos guardados en archivo binario para futuras ejecuciones." << std::endl;
+    }
+
+    std::cout << "Datos cargados exitosamente" << std::endl;
+}
+
+void LoadDataFires(std::string NameFile){
+    // Remueve la extensión ".txt" del archivo y reemplázala con ".bin"
+    std::string binaryFilename = NameFile.substr(0, NameFile.find_last_of('.')) + ".bin";
         // Carga los datos desde "coordenadasfuentesgrilla1410.txt" en los vectores id y rho_f
         std::string coordinateFile = "coordenadasfuentesgrilla1410.txt";
         std::ifstream coordFile(coordinateFile);
@@ -376,15 +394,7 @@ void LoadData(std::string NameFile)
             id.push_back(temp_id);
             rho_f.push_back(temp_rho_f);
         }
-
         coordFile.close();
-
-        // Guarda los datos en un archivo binario para acelerar futuras ejecuciones
-        //SaveDataBinary(binaryFilename, Ux, Uy, totalSize);
-        //std::cout << "Datos guardados en archivo binario para futuras ejecuciones." << std::endl;
-    }
-
-    std::cout << "Datos cargados exitosamente" << std::endl;
 }
 
 // Función para cargar los datos desde un archivo binario.
@@ -430,26 +440,16 @@ void SaveDataBinary(const std::string &filename, double *Ux, double *Uy, int siz
 // Funcion main
 int main(int argc, char* argv[]){
     // Parámetros de la simulación
-    int tframe = t_hour/4, tmax = t_hour*11, delta_t = 1, ret;
+    int tframe = iter_per_hour*2, tmax = iter_per_hour*t_hour, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
 
     // Densidad inicial y velocidad 
-    double rho0 = 0.001, Ux0 = 0.0, Uy0 = 0.0; 
-    // Parámetros para la distribución gaussiana que inicializa la densidad
-    double mu_x = Lx/2.0, mu_y = Ly/2.0, sigma_x = Lx/4.0, sigma_y = Ly/4.0; // Parámetros de la gaussiana: centro (mu_x, mu_y), sigma: ancho
-
-    // std::cout << mu_x << " " << mu_y << " " << sigma_x << " " << sigma_y << std::endl;
-
+    double rho0 = 0.00001, Ux0 = 0.0, Uy0 = 0.0; 
     // Crear una instancia de la clase LatticeBoltzman
     LatticeBoltzman Air;
 
     LoadData("velocity.txt");
-    LoadData("coordenadasfuentesgrilla1410.txt");
+    LoadDataFires("coordenadasfuentesgrilla1410.txt");
 
-    // //Muestra los datos cargados de id y rho_f (opcional para depuración)
-    // std::cout << "Datos cargados de coordenadas:" << std::endl;
-    // for (size_t i = 0; i < id.size(); i++) {
-    //     std::cout << "id: " << id[i] << ", rho_f: " << rho_f[i] << std::endl;
-    // }
     // Leer parámetros desde la línea de comandos: término de fuente y coeficiente de difusión
     D = std::stod(argv[1]); // Coeficiente de difusión (ejemplo: 0.016 -> tau = 0.548)
 
@@ -461,7 +461,7 @@ int main(int argc, char* argv[]){
     UmUtau = 1 - Utau; // 1 - 1/tau
 
     // Inicializar la simulación con las condiciones iniciales (densidad y velocidades)
-    Air.Start(rho0, Ux0, Uy0, mu_x, mu_y, sigma_x, sigma_y);
+    Air.Start(rho0, Ux0, Uy0);
 
     // Bucle principal de la simulación
     for (int t = 0; t <= tmax; t++)
@@ -494,6 +494,5 @@ int main(int argc, char* argv[]){
             std::cout << "Porcentaje de avance: " << (t * 100) / tmax << "%" << std::endl;
         }
     }
-
     return 0;
 }
