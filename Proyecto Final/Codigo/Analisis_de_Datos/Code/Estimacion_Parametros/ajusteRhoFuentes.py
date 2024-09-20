@@ -69,7 +69,7 @@ def unlinearize_grid(linearized_array, Lx, Ly):
 
     return density_grid
 
-def objective(rho_sources_opt, stations, density_observed_stations, sources_1D): #Cambio, no entra como parámetro la densidad simulada.
+def objective(rho_sources_opt, stations, density_observed): #Cambio, no entra como parámetro la densidad simulada.
     """
     Calcula el error entre la densidad observada y la densidad simulada solo en las celdas que tienen estaciones.
 
@@ -85,11 +85,11 @@ def objective(rho_sources_opt, stations, density_observed_stations, sources_1D):
     density_simulated_opt = linearize_grid(density_grid_simulated_opt)
 
     # Extraer las densidades en las estaciones de la densidad observada y simulada optimizada
+    observed_stations = density_observed[stations]
     simulated_stations_opt = density_simulated_opt[stations]
 
-
     # Calcular el error cuadrático medio entre las densidades observadas y simuladas en las estaciones
-    error = np.sum((density_observed_stations - simulated_stations_opt) ** 2)
+    error = np.sum((observed_stations - simulated_stations_opt) ** 2)
     return error
 
 def optimize_parameters_for_cells(stations, density_observed, sources_1D, rho_sources):
@@ -98,7 +98,7 @@ def optimize_parameters_for_cells(stations, density_observed, sources_1D, rho_so
     bounds = [(0.5, 4.0)] * len(sources_1D)  # Restricciones sobre los valores de las celdas fuente
 
     # Ejecutar la optimización
-    result = minimize(objective, rho_initial, args=(stations, density_observed, sources_1D), method='L-BFGS-B', bounds=bounds)
+    result = minimize(objective, rho_initial, args=(stations, density_observed), method='L-BFGS-B', bounds=bounds)
 
     # Resultados óptimos
     rho_opt = result.x
@@ -134,9 +134,6 @@ if __name__=="__main__":
 
     rho_simulated = linearize_grid(density_grid_simulated)
     rho_obs = linearize_grid(density_grid_obs)
-    rho_obs = rho_obs[stations]
-    print(len(rho_simulated))
-    print(len(rho_obs))
 
     # Optimización de los parámetros de las fuentes
     rho_opt = optimize_parameters_for_cells(stations, rho_obs, sources_1D, initial_rho_sources)
