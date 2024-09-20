@@ -1,17 +1,16 @@
-Estación,VelViento,DirViento,PM10,Pm2.5,y_cell,x_cell,linealization
-Guaymaral,True,True,True,True,12,7,175
-Suba,True,True,True,True,11,5,159
-Colina,True,True,True,True,10,6,146
-Usaquén,True,True,True,True,9,8,134
-Las Ferias,True,True,True,True,8,5,117
-Fontibón,True,True,True,True,7,3,101
-Centro de Alto Rendimiento,True,True,True,True,6,5,89
-Móvil Séptima,True,True,True,True,6,6,90
-Kennedy,True,True,True,True,5,2,72
-Puente Aranda,True,True,True,True,5,4,74
-Ministerio de Ambiente,True,True,True,True,5,6,76
-Carvajal-Sevillana,True,True,True,True,4,3,59
-Jazmín,True,True,True,True,4,4,60
-Ciudad Bolivar,True,True,True,True,3,2,44
-Tunal,True,True,True,True,3,3,45
-San Cristobal,True,True,True,True,3,5,47
+Estación,x_cell,y_cell
+Guaymaral,56,31
+Suba,22,33
+Colina,36,33
+Usaquén,29,41
+Las Ferias,43,46
+Fontibón,24,53
+Centro de Alto Rendimiento,63,53
+Móvil Séptima,42,56
+Puente Aranda,56,68
+Ministerio de Ambiente,31,76
+Jazmín,79,90
+Ciudad Bolivar,62,101
+Tunal,52,111
+San Cristobal,73,121
+"Dimensiones (Lx,Ly)",100,140
