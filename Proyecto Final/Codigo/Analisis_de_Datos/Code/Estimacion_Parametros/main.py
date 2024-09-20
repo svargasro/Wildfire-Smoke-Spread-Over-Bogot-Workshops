@@ -1,6 +1,7 @@
 import ajuste 
 import obs_data
 import numpy as np
+import LB.py
 
 if __name__=="__main__":
     # Ejemplo de uso
