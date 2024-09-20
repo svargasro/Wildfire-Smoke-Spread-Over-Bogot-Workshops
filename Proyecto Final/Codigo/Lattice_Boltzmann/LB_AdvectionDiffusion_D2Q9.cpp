@@ -10,12 +10,12 @@
 // Dimensiones de la cuadrícula
 const int Lx = 100; // 100
 const int Ly = Lx*(1.4); // 140
-int iter_per_hour = 50;
+int iter_per_hour = 9604;
 //int iter_per_hour = 9604;
 
 const int Q = 9;// Número de direcciones en el espacio de velocidades
 
-int t_hour = 240;
+int t_hour = 241;
 //int t_hour = 240;
 double *Ux = new double[Lx * Ly * t_hour];
 double *Uy = new double[Lx * Ly * t_hour]; // Velocidades en x y y
@@ -56,8 +56,8 @@ class LatticeBoltzman{
     void ImposeFields(int t);
     void Advection(void);
     void Start(double rho0, double Ux0, double Uy0);
-    void PrintData(std::string NameFile, double t);                                                            // Imprimir resultados a archivo
-    void PrintFrame(double t);                                                                                 // Generar y guardar el frame de la simulación
+    void PrintData(std::string NameFile);                                                            // Imprimir resultados a archivo
+    void PrintFrame(double t, int t_a);                                                                                 // Generar y guardar el frame de la simulación
 };
 
 //-------------------------------FUNCIONES GLOBALES------------------------
@@ -275,7 +275,7 @@ void LatticeBoltzman::Advection(void){
 // Funciones de impresión de resultados y visualización
 //---------------------Impresión de resultados---------------------
 // Funcion para imprimir los resultados de la simulación en un archivo
-void LatticeBoltzman::PrintData(std::string NameFile, double t)
+void LatticeBoltzman::PrintData(std::string NameFile)
 {
     // Abre un archivo de salida para guardar los datos de la simulación
     std::ofstream MyFile(NameFile);
@@ -301,7 +301,7 @@ void LatticeBoltzman::PrintData(std::string NameFile, double t)
 }
 
 // Funcion para imprimir un frame de la simulación
-void LatticeBoltzman::PrintFrame(double t)
+void LatticeBoltzman::PrintFrame(double t, int t_a)
 {
     // Verifica si el directorio "frames" existe, de lo contrario, lo crea
     int ret;
@@ -316,7 +316,7 @@ void LatticeBoltzman::PrintFrame(double t)
     std::ofstream GnuplotScript("frame_script.gp");
 
     GnuplotScript << "set terminal pngcairo size 800,800 enhanced font 'Verdana,10'" << std::endl;                    // Configuración del terminal de salida para Gnuplot, generando imágenes PNG
-    GnuplotScript << "set output 'frames/density_" << std::setw(3) << std::setfill('0') << t << ".png'" << std::endl; // Nombre del archivo de salida PNG, numerado según el tiempo de simulación
+    GnuplotScript << "set output 'frames/density_" << std::setw(3) << std::setfill('0') << t_a << ".png'" << std::endl; // Nombre del archivo de salida PNG, numerado según el tiempo de simulación
     GnuplotScript << "set pm3d map" << std::endl;                                                                     // Usar un mapa de calor (pm3d) para visualizar los datos
     GnuplotScript << "set size ratio -1" << std::endl;                                                                // Mantener una relación de aspecto cuadrada
     GnuplotScript << "set xrange [0:" << Lx << "]" << std::endl;                                                      // Definir los límites de los ejes x e y, basados en las dimensiones de la cuadrícula
@@ -324,7 +324,7 @@ void LatticeBoltzman::PrintFrame(double t)
     GnuplotScript << "set cbrange [0:5000000]" << std::endl;                                                                        // Configurar la escala de colores (color bar) para los valores de densidad
     GnuplotScript << "set palette defined (0 'black', 1 'red', 2 'orange', 3 'yellow', 4 'white')" << std::endl;              // Definir la paleta de colores, de negro a blanco pasando por rojo, naranja y amarillo
     GnuplotScript << "set title 'Densidad en t = " << t << "'" << std::endl;                                                  // Definir el título del gráfico, basado en el tiempo de simulación actual
-    GnuplotScript << "plot 'data/density_" << std::setw(3) << std::setfill('0') << t << ".dat' u 1:2:3 w image" << std::endl; // Instrucción para graficar los datos de densidad desde el archivo correspondiente
+    GnuplotScript << "plot 'data/density_" << std::setw(3) << std::setfill('0') << t_a << ".dat' u 1:2:3 w image" << std::endl; // Instrucción para graficar los datos de densidad desde el archivo correspondiente
     GnuplotScript.close();                                                                                                    // Cerrar el archivo de script
 
     // Ejecutar el script de Gnuplot para generar la imagen PNG
@@ -445,8 +445,10 @@ void SaveDataBinary(const std::string &filename, double *Ux, double *Uy, int siz
 
 // Funcion main
 int main(int argc, char* argv[]){
+
+    int t_a = 0;
     // Parámetros de la simulación
-    int tframe = iter_per_hour*10, tmax = iter_per_hour*t_hour, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
+    int tframe = iter_per_hour/2, tmax = iter_per_hour*t_hour, delta_t = 1, ret; // tframe: intervalo entre frames, tmax: tiempo máximo de simulación
 
     // Densidad inicial y velocidad 
     double rho0 = 0.00001, Ux0 = 0.0, Uy0 = 0.0; 
@@ -490,11 +492,12 @@ int main(int argc, char* argv[]){
 
             // Crear un archivo para guardar los resultados de la simulación
             std::stringstream ss;
-            ss << "data/density_" << std::setw(3) << std::setfill('0') << t << ".dat"; // Nombre del archivo basado en el tiempo de simulación
-            Air.PrintData(ss.str(), t);                                                // Llamada a la función que guarda los datos
+            ss << "data/density_" << std::setw(3) << std::setfill('0') << t_a << ".dat"; // Nombre del archivo basado en el tiempo de simulación
+            Air.PrintData(ss.str());                                                // Llamada a la función que guarda los datos
 
             // Generar un frame de la simulación usando Gnuplot
-            Air.PrintFrame(t);
+            Air.PrintFrame(t,t_a);
+            t_a++;
 
             // Mostrar el porcentaje de avance de la simulación en la consola
             std::cout << "Porcentaje de avance: " << (t * 100) / tmax << "%" << std::endl;
