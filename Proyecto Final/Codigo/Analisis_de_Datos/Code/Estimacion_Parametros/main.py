@@ -1,32 +1,45 @@
-import ajuste 
+import ajuste
 import obs_data
 import numpy as np
 
+
 if __name__=="__main__":
     # Ejemplo de uso
-    Lx = 15
-    Ly = 15
-    sigma = 5.0
-    sources_1D = [33, 141, 175,23]  # Índices de celdas con incendio.
-    initial_rho_sources = [1.0, 2.0, 1.5, 3.4] #Valores iniciales de rho (Investigación Alejandra)
-    stations = obs_data.coord_est()   #Ubicación de las estaciones.
-    #stations = [21, 70, 81, 122, 133, 3] #Ubicación de las estaciones.
-    rho_sources_random = np.random.uniform(0.5, 4.0, size=4) #Valores de rho reales (Random para probar varias veces)
+    Lx = 100
+    Ly = (1.4)*Lx
+    sources_1D = []  # Lectura ubicación de todas las fuentes para todas las horas.
+    initial_rho_sources = [] #Valores iniciales de rho de las fuentes para todas las horas.
+    velocityData = [] #Valores de velocidades para todas las horas.
 
-    # Simular la densidad y obtener una grilla para plot (Densidades en el espacio)
-    density_grid_simulated = ajuste.LB_density_with_sources(Lx, Ly, sources_1D, initial_rho_sources, sigma)
-    density_grid_obs = ajuste.LB_density_with_sources(Lx, Ly, sources_1D, rho_sources_random, sigma)
+    stations = obs_data.coord_est('../../Data/estaciones_coord.txt') #Ubicación de las estaciones.
+    PM_estaciones = obs_data.PM_base('../../Data/PM_base.csv') #Datos de contaminación en estaciones.
 
-    #Plots de las densidades.
-    #plot_density_grid(density_grid_simulated,Lx,Ly)
-    #plot_density_grid(density_grid_obs,Lx,Ly)
+    iter_per_hour = 9604
+    timesAdjusment = np.arange(0,9604*24,9604/2) #Lectura de todos los tiempos para ajuste.
 
-    rho_simulated = ajuste.linearize_grid(density_grid_simulated)
-    rho_obs = ajuste.linearize_grid(density_grid_obs)
+    #timesAdjusment[0,9604/4,(9604/4)*2]
 
-    # Optimización de los parámetros de las fuentes, pasando Lx, Ly y sigma
+    for i, t in enumerate(timesAdjusment):
+        # Optimización de los parámetros de las fuentes
+        tInicial = timesAdjusment[i]
+        if(i != len(timesAdjusment)):
+            tFinal = timesAdjusment[i+1]
+
+        if(i==0): #El Lattice Boltzmann debe usar start solo cuando t=0, en otro caso, usa Load para cargar fnew.
+            LatticeBoltzmann(tInicial, 1, ID_sources, rho_sources, velocidades) #Genera un archivo de fnew para todas las celdas linealizadas.
+
+        rho_opt = optimize_parameters_for_cells(stations, PM_estaciones, sources_1D,initial_rho_sources)
+
+        density_opt= LB_density_with_sources(Lx, Ly, sources_1D, rho_opt, sigma)
+
+        LatticeBoltzmann(int tinicial,int tfinal, ID_Sources,  rho_sources, velocidades)
+
+        print("Valores óptimos de rho:", rho_opt, rho_sources_random)
+
+
+
+
     rho_opt = ajuste.optimize_parameters_for_cells(stations, rho_obs, sources_1D, initial_rho_sources, Lx, Ly, sigma)
     density_opt = ajuste.LB_density_with_sources(Lx, Ly, sources_1D, rho_opt, sigma)
 
     print("Valores óptimos de rho:", rho_opt, rho_sources_random)
->>>>>>> 94b6b97 (Saved cython code)
