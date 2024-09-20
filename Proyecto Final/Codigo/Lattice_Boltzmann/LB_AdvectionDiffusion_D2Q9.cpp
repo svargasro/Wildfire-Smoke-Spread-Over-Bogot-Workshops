@@ -200,47 +200,6 @@ void LatticeBoltzman::Collision()
     }
 }
 
-// void LatticeBoltzman::ImposeFields(int t)
-// {
-//     double rho0;
-//     int auxT=(t+1)/iter_per_hour;
-//     double Ux0,Uy0;
-//     int index_tmp = 0;
-//     for (int ix = 0; ix < Lx; ix++)
-//     {
-//         for (int iy = 0; iy < Ly; iy++)
-//         {
-//             int index = ix*Ly+iy +Lx*Ly*auxT;
-//             int index_tmp =0;
-//             Ux0 = Ux[index];
-//             Uy0 = Uy[index];
-//             rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
-//             for (int i = 0; i < Q; i++)
-//             {
-//                 int n0 = n(ix, iy, i);
-//                 if(((ix*Ly)+iy) == id[index_f] && IsData){
-//                     //std::cout<<"Indice i_f "<<index_f<<std::endl;
-//                     //std::cout<<"Id_ "<<id[index_f]<<std::endl;
-//                     //std::cout<<"t "<<t<<std::endl;
-//                     fnew[n0] = feq(rho_f[index_f], Ux0, Uy0, i);
-//                     if(i==Q-1){
-//                         index_f++;
-//                         index_tmp++;}
-//                     if((t+1)%(iter_per_hour*24)!=0)index_f=index_f-index_tmp;
-//                     if(index_f >= id.size()) IsData = false;
-
-//                 }
-//                 //else if(ix*Ly+iy == id[index_f-index_tmp]){
-
-//                 //}
-//                 else{
-//                     fnew[n0] = feq(rho0, Ux0, Uy0, i);
-//                 }
-//             }
-//         }   
-//     }
-// }
-
 void LatticeBoltzman::ImposeFields(int t)
 {
     static int iteraciones_por_dia = 0; // Esta variable debe mantenerse entre llamadas a la función
