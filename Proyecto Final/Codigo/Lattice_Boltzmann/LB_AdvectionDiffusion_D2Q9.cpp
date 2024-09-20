@@ -200,53 +200,97 @@ void LatticeBoltzman::Collision()
     }
 }
 
+// void LatticeBoltzman::ImposeFields(int t)
+// {
+//     double rho0;
+//     int auxT=(t+1)/iter_per_hour;
+//     double Ux0,Uy0;
+//     int index_tmp = 0;
+//     for (int ix = 0; ix < Lx; ix++)
+//     {
+//         for (int iy = 0; iy < Ly; iy++)
+//         {
+//             int index = ix*Ly+iy +Lx*Ly*auxT;
+//             int index_tmp =0;
+//             Ux0 = Ux[index];
+//             Uy0 = Uy[index];
+//             rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
+//             for (int i = 0; i < Q; i++)
+//             {
+//                 int n0 = n(ix, iy, i);
+//                 if(((ix*Ly)+iy) == id[index_f] && IsData){
+//                     //std::cout<<"Indice i_f "<<index_f<<std::endl;
+//                     //std::cout<<"Id_ "<<id[index_f]<<std::endl;
+//                     //std::cout<<"t "<<t<<std::endl;
+//                     fnew[n0] = feq(rho_f[index_f], Ux0, Uy0, i);
+//                     if(i==Q-1){
+//                         index_f++;
+//                         index_tmp++;}
+//                     if((t+1)%(iter_per_hour*24)!=0)index_f=index_f-index_tmp;
+//                     if(index_f >= id.size()) IsData = false;
+
+//                 }
+//                 //else if(ix*Ly+iy == id[index_f-index_tmp]){
+
+//                 //}
+//                 else{
+//                     fnew[n0] = feq(rho0, Ux0, Uy0, i);
+//                 }
+//             }
+//         }   
+//     }
+// }
+
 void LatticeBoltzman::ImposeFields(int t)
 {
+    static int iteraciones_por_dia = 0; // Esta variable debe mantenerse entre llamadas a la función
     double rho0;
-    int auxT=(t+1)/iter_per_hour;
-    double Ux0,Uy0;
-    int index_tmp = 0;
+    int auxT = (t+1) / iter_per_hour;
+    double Ux0, Uy0;
+    //print(iteraciones_por_dia, iter_per_hour*24)
+    //std::cout<<"Indice i_f "<<iteraciones_por_dia<<"Indice i_f "<<iter_per_hour*24*9<<"Indice i_f "<<t<<std::endl;
     for (int ix = 0; ix < Lx; ix++)
     {
         for (int iy = 0; iy < Ly; iy++)
-                    // int index = ix*Ly+iy +Lx*Ly*auxT;
-            // if((t+1)%iter_per_hour == 0)  index_f = index_f + fire_per_hour;
-            // Ux0 = Ux[index];
-            // Uy0 = Uy[index];
-            // rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
-            // if(ix*Ly+iy == id[index_f]){
-            //     rho0 = rho_f[index_f];
-            //     index_f++;
-            // }
         {
-            int index = ix*Ly+iy +Lx*Ly*auxT;
-            int index_tmp =0;
+            int index = ix * Ly + iy + Lx * Ly * auxT;
             Ux0 = Ux[index];
             Uy0 = Uy[index];
             rho0 = rho(ix, iy, true); // Usar fnew para obtener la densidad
+
             for (int i = 0; i < Q; i++)
             {
                 int n0 = n(ix, iy, i);
-                if(((ix*Ly)+iy) == id[index_f] && IsData){
-                    //std::cout<<"Indice i_f "<<index_f<<std::endl;
-                    //std::cout<<"Id_ "<<id[index_f]<<std::endl;
-                    //std::cout<<"t "<<t<<std::endl;
-                    fnew[n0] = feq(rho_f[index_f], Ux0, Uy0, i);
-                    if(i==Q-1){
-                        index_f++;
-                        index_tmp++;}
-                    if((t+1)%(iter_per_hour*24)!=0)index_f=index_f-index_tmp;
-                    if(index_f >= id.size()) IsData = false;
 
+                if (ix * Ly + iy == id[index_f] && IsData)
+                {
+                    // Verifica si estamos al inicio de un nuevo día o si estamos dentro del rango del día actual
+                    if ((t) % (iter_per_hour * 24) == 0 || iteraciones_por_dia > 0)
+                    {
+                        // Asignar valores durante las iteraciones del día
+                        fnew[n0] = feq(rho_f[index_f], Ux0, Uy0, i);
+                        //std::cout<<"Indice i_f "<<index_f<<std::endl;
+                        //std::cout<<"Id_ "<<id[index_f]<<std::endl;
+                        // Incrementar el contador de iteraciones del día
+                        iteraciones_por_dia++;
+
+                        // Si llegamos al final del ciclo diario, reiniciamos y avanzamos index_f
+                        if (iteraciones_por_dia >= iter_per_hour * 24*9)
+                        {
+                            iteraciones_por_dia = 0; // Reiniciar el contador de iteraciones
+                            index_f++;           // Avanzar al siguiente elemento
+                            if (index_f >= id.size())
+                            {
+                                IsData = false;   // Desactivar si no quedan más elementos
+                            }
+                        }
+                    }
                 }
-                //else if(ix*Ly+iy == id[index_f-index_tmp]){
-
-                //}
                 else{
                     fnew[n0] = feq(rho0, Ux0, Uy0, i);
                 }
             }
-        }   
+        }
     }
 }
 
