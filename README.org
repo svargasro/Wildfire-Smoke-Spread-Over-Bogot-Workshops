@@ -1,0 +1,52 @@
+#+TITLE: Final Project Repository
+
+* Overview
+This repository contains the code, data, and documentation for the Final Project in Simulation Methods in Physics for the academic term 2024-I. The project focuses on analyzing air pollution data using the Lattice Boltzmann method and other simulation techniques.
+
+* Directory Structure
+The repository is organized into the following main directories:
+
+** FinalProject
+   This directory contains all relevant files for the Final Project.
+
+** Bibliography: Contains references and related literature used for the project.
+     - [30] ANewSchemeForSourceTermInLBGKModelForConvection–DiffusionEquation.pdf
+     - Dialnet-ModelamientoDeLosNivelesDeContaminacionEnUnTramoDe-9207026.pdf
+     - Lattice-Boltzmann Course 4 - Electrodynamics and Curvilinear Coordinates.pdf
+     - TesisMaestria_JulianaGarciaS_2019.pdf
+
+** src: This directory contains the source code and data used for the analysis.
+*** Data_Analysis: Contains code for data analysis.
+**** Code: Source code files for pollution analysis and velocity estimation.
+**** Data: Raw data files used in the analysis, including CSV files for various locations and contamination levels.
+
+*** Lattice_Boltzmann: Contains implementation files for the Lattice Boltzmann method.
+       - Includes source code files (.cpp), coordinate files, and visualization files (GIFs)
+
+        ** Workshops
+This directory contains materials and exercises from various workshops designed to enhance understanding and application of simulation methods and data analysis in physics.
+** Workshops:
+*** Workshop_1: Lennard-Jones Gas Model and Others
+**** Contents:
+     - **Lennard-Jones-Gas**:
+       - Code implementations for simulating the Lennard-Jones potential and visualizations for different states (gas, liquid, solid).
+     - **Sand Pile Models**:
+       - Code and images demonstrating the behavior of sandpile structures under various conditions.
+     - **SIR Model**:
+       - Simulation of the SIR model with data from COVID-19 in Colombia.
+     - **Trojan Planets**:
+       - Simulations and analyses involving celestial mechanics.
+     - **Vibration Modes of a Drum**:
+       - Multiple code files for studying drum vibrations and their graphical outputs.
+
+*** Workshop_2: Advanced Topics in Computational Physics
+
+**** Contents:
+     - **3_CellularAutomata**:
+       - Implementations of cellular automata with various diffusion models, including code files and visual outputs.
+     - **4_WavesSnellLaw**:
+       - Simulations related to wave behavior at interfaces, featuring relevant source code and data files.
+     - **5_DragForce**:
+       - Studies on drag force on a sphere.
+     - **LB Fluids CUDA**:
+       - Files for simulating lattice Boltzmann fluids using CUDA, including a Jupyter notebook for interactive analysis.
