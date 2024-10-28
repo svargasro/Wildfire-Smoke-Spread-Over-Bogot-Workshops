@@ -27,25 +27,25 @@ The repository is organized into the following main directories:
 This directory contains materials and exercises from various workshops designed to enhance understanding and application of simulation methods and data analysis in physics.
 *** Workshop_1: Lennard-Jones Gas Model and Others
 **** Contents:
-     - **Lennard-Jones-Gas**:
+***** Lennard-Jones-Gas:
        - Code implementations for simulating the Lennard-Jones potential and visualizations for different states (gas, liquid, solid).
-     - **Sand Pile Models**:
+***** Sand Pile Models:
        - Code and images demonstrating the behavior of sandpile structures under various conditions.
-     - **SIR Model**:
+***** SIR Model:
        - Simulation of the SIR model with data from COVID-19 in Colombia.
-     - **Trojan Planets**:
+***** Trojan Planets:
        - Simulations and analyses involving celestial mechanics.
-     - **Vibration Modes of a Drum**:
+***** Vibration Modes of a Drum:
        - Multiple code files for studying drum vibrations and their graphical outputs.
 
 *** Workshop_2: Advanced Topics in Computational Physics
 
 **** Contents:
-     - **3_CellularAutomata**:
+***** 3_CellularAutomata:
        - Implementations of cellular automata with various diffusion models, including code files and visual outputs.
-     - **4_WavesSnellLaw**:
+***** 4_WavesSnellLaw:
        - Simulations related to wave behavior at interfaces, featuring relevant source code and data files.
-     - **5_DragForce**:
+***** 5_DragForce:
        - Studies on drag force on a sphere.
-     - **LB Fluids CUDA**:
+***** LB Fluids CUDA:
        - Files for simulating lattice Boltzmann fluids using CUDA, including a Jupyter notebook for interactive analysis.
