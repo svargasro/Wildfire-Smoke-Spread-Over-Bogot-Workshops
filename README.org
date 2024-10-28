@@ -23,9 +23,8 @@ The repository is organized into the following main directories:
 *** Lattice_Boltzmann: Contains implementation files for the Lattice Boltzmann method.
        - Includes source code files (.cpp), coordinate files, and visualization files (GIFs)
 
-        ** Workshops
-This directory contains materials and exercises from various workshops designed to enhance understanding and application of simulation methods and data analysis in physics.
 ** Workshops:
+This directory contains materials and exercises from various workshops designed to enhance understanding and application of simulation methods and data analysis in physics.
 *** Workshop_1: Lennard-Jones Gas Model and Others
 **** Contents:
      - **Lennard-Jones-Gas**:
